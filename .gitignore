@@ -26,3 +26,9 @@
 *.exe
 *.out
 *.app
+
+# Cmake file
+src/predic/CMakeCache.txt
+src/predic/CMakeFiles/
+src/predic/Makefile
+src/predic/cmake_install.cmake
