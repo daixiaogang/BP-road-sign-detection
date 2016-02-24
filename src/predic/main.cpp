@@ -1,21 +1,11 @@
 #include "boost/program_options.hpp"
 
 #include <iostream>
-#include <string>
-
-namespace {
-    const size_t ERROR_IN_COMMAND_LINE = 1;
-    const size_t SUCCESS = 0;
-    const size_t ERROR_UNHANDLED_EXCEPTION = 2;
-
-} // namespace
-
 
 using namespace std;
 
-int main(int argc, char **argv) {
-    cout << "Hello, World!" << endl;
-
+class Arguments {
+public:
     string input;
     string output;
     string annotation;
@@ -23,6 +13,18 @@ int main(int argc, char **argv) {
     int camera = 0;
     bool show = false, no_class = false, clasify = false, debug = false, cross = false;
     bool image_mode = false, video_mode = false, cam_mode = false;
+};
+
+namespace {
+    const size_t ERROR_IN_COMMAND_LINE = 1;
+    const size_t SUCCESS = 0;
+    const size_t ERROR_UNHANDLED_EXCEPTION = 2;
+} // namespace
+
+
+int main(int argc, char **argv) {
+    Arguments arg;
+
     try {
         /** Define and parse the program options
          */
@@ -33,14 +35,14 @@ int main(int argc, char **argv) {
 
         try {
             desc.add_options()
-                    ("image,i", po::value<string>(&input),
+                    ("image,i", po::value<string>(&arg.input),
                      "File or directory input images. If not chosen than default camera mode run.")
-                    ("video,v", po::value<string>(&input),
+                    ("video,v", po::value<string>(&arg.input),
                      "File or directory input videos. If not chosen than default camera mode run.")
-                    ("camera,e", po::value<int>(&camera), "Selectin of the camera. Default 0.")
-                    ("output,o", po::value<string>(&input), "Directory output result")
+                    ("camera,e", po::value<int>(&arg.camera), "Selectin of the camera. Default 0.")
+                    ("output,o", po::value<string>(&arg.output), "Directory output result")
                     ("show,s", "Show current image or frame by video")
-                    ("annotation,a", po::value<string>(&annotation), "File of output annotation")
+                    ("annotation,a", po::value<string>(&arg.annotation), "File of output annotation")
                     ("classification,c", "Make only classification")
                     ("no_classification,n", "Make only detection")
                     ("model_detect,t", "File of model  detection")
@@ -49,7 +51,6 @@ int main(int argc, char **argv) {
                     ("cross_validation,r", "Cross-validation")
                     ("debug,g", "Debug mode");
             po::store(po::parse_command_line(argc, argv, desc), vm); // can throw
-
 
             /** --help option
              */
@@ -61,7 +62,7 @@ int main(int argc, char **argv) {
             }
 
             if (vm.count("show")) {
-                show = true;
+                arg.show = true;
                 cout << "show" << endl;
             }
 
@@ -72,26 +73,24 @@ int main(int argc, char **argv) {
 
             if (vm.count("classification")) {
                 cout << "classif" << endl;
-                clasify = true;
+                arg.clasify = true;
             }
 
             if (vm.count("no_classification")) {
-                no_class = true;
+                arg.no_class = true;
                 cout << "no clasiif" << endl;
             }
 
-            cout << vm.count("image") << "JJ" << vm.count("video") << "KK" << vm.count("camera") << endl;
-
             if (!vm.count("image") && (!vm.count("video"))) {
-                cam_mode = true;
+                arg.cam_mode = true;
                 cout << "camera mode" << endl;
             }
             else if (vm.count("image") && !vm.count("video") && !vm.count("camera")) {
-                image_mode = true;
+                arg.image_mode = true;
                 cout << "image mode" << endl;
             }
             else if (!vm.count("image") && vm.count("video") && !vm.count("camera")) {
-                video_mode = true;
+                arg.video_mode = true;
                 cout << "video mode" << endl;
             }
             else {
@@ -100,18 +99,16 @@ int main(int argc, char **argv) {
             }
 
             if (vm.count("cross_validation")) {
-                cross = true;
+                arg.cross = true;
                 cout << "cross_validaton" << endl;
             }
 
-
             if (vm.count("debug")) {
-                debug = true;
+                arg.debug = true;
                 cout << "debug" << endl;
             }
 
-            po::notify(vm); // throws on error, so do after help in case
-            // there are any problems
+            po::notify(vm);
         }
         catch (po::error &e) {
             std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
@@ -126,9 +123,6 @@ int main(int argc, char **argv) {
         std::cerr << "Unhandled Exception reached the top of main: "
         << e.what() << ", application will now exit" << std::endl;
         return ERROR_UNHANDLED_EXCEPTION;
-
     }
-
-
     return 0;
 }
