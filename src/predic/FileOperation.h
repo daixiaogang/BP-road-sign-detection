@@ -32,6 +32,7 @@ public:
     std::vector<std::string> GetFilesVector();
 
     bool IsDirectory(std::string input);
+    bool IsFileExist(std::string input);
 };
 
 

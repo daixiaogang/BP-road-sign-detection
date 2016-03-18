@@ -23,7 +23,7 @@ if (NOT OpenCV_FOUND)
     message(FATAL_ERROR "Could not find boost!")
 endif ()
 
-set(SOURCE_FILES main.cpp ProgramOption.cpp ProgramOption.h FileOperation.cpp FileOperation.h)
+set(SOURCE_FILES main.cpp ProgramOption.cpp ProgramOption.h FileOperation.cpp FileOperation.h PipeLineItem.h ABoostDetection.cpp ABoostDetection.h Classification.cpp Classification.h )
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
     add_executable(predic ${SOURCE_FILES})

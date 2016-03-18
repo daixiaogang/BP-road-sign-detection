@@ -77,3 +77,13 @@ bool FileOperation::IsDirectory(std::string input) {
     path p(input);
     return is_directory(p);
 }
+
+bool FileOperation::IsFileExist(std::string input) {
+    path p(input);
+    if (exists(p)) {
+        if (is_regular_file(p))
+            return true;
+    }
+
+    return false;
+}

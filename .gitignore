@@ -30,3 +30,6 @@
 # Cmake build file
 src/*/build/
 
+# Models
+models/
+

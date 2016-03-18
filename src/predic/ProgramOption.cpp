@@ -15,9 +15,9 @@ ProgramOption::ProgramOption(int argc, char **argv) {
     FileOperation *fopt = new FileOperation();
 
 
-    int ret = ParseArgument(argc, argv);
+    int ret = ParseArgument(argc, argv, fopt);
     if (ret != 0) {
-        std::cerr << "Chyba" << std::endl;
+        std::cerr << "Chyba programoptiondi" << std::endl;
     }
 
     ProcessOption(fopt);
@@ -28,7 +28,7 @@ ProgramOption::ProgramOption(int argc, char **argv) {
 
 void ProgramOption::InitDefaultValues() {
 
-    m_aboost = "../../../models/models_Aboost_detector/";
+    m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/D/cascade.xml";
     m_svm = "../../../models/models_/model_SVM_classifier";
 
 
@@ -39,7 +39,7 @@ void ProgramOption::InitDefaultValues() {
 }
 
 
-int ProgramOption::ParseArgument(int argc, char **argv) {
+int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
 
     try {
         /** Define and parse the program options
@@ -125,6 +125,34 @@ int ProgramOption::ParseArgument(int argc, char **argv) {
                 cout << "debug" << endl;
             }
 
+            if (vm.count("model_classif")) {
+                if (!p_fopt->IsFileExist(m_svm))
+                {
+                    std::cerr << "ERROR: "<< "Model of clasificatin not file or exist> " << m_svm<<endl;
+                    return ERROR_IN_COMMAND_LINE;
+                }
+                cout << "model_classif" << endl;
+            }
+
+            if (vm.count("model_detect")) {
+                if (!p_fopt->IsFileExist(m_aboost))
+                {
+                    std::cerr << "ERROR: "<< "Model of detection not file or not exist> " << m_aboost<<endl;
+                    return ERROR_IN_COMMAND_LINE;
+                }
+                cout << "model_detect" << endl;
+            }
+
+            if (vm.count("output")) {
+                cout<<output<<endl;
+                if (!p_fopt->IsDirectory(output))
+                {
+                    std::cerr << "ERROR: "<< "Directory of output not exist> " << output<<endl;
+                    return ERROR_IN_COMMAND_LINE;
+                }
+                cout << "output" << endl;
+            }
+
             po::notify(vm);
         }
         catch (po::error &e) {
@@ -147,10 +175,9 @@ int ProgramOption::ParseArgument(int argc, char **argv) {
 }
 
 
-void ProgramOption::ProcessOption(FileOperation *p_fopt) {
+bool ProgramOption::ProcessOption(FileOperation *p_fopt) {
 
-    std::vector<std::string> list;
-
+    // nacist a ziskat seznam
     if (image_mode || video_mode){
         if (p_fopt->LoadInputToVector(input_path))
             list = p_fopt->GetFilesVector();

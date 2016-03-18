@@ -27,6 +27,11 @@ private:
     std::string m_aboost;
     std::string m_svm;
 
+    std::vector<string> list;
+
+
+
+
     int camera;
     bool show, no_class, clasify, debug, cross;
     bool image_mode, video_mode, cam_mode;
@@ -41,10 +46,20 @@ public:
     void InitDefaultValues();
 
 
-    int ParseArgument(int argc, char **argv);
+    int ParseArgument(int argc, char **argv, FileOperation *p_fopt);
 
 
-    void ProcessOption(FileOperation *p_fopt);
+    bool ProcessOption(FileOperation *p_fopt);
+
+
+    std::vector<std::string> GetVectorOfFiles() {
+        return list;
+    }
+
+    std::string GetPathModelAboost(){
+        return m_aboost;
+    }
+
 };
 
 
