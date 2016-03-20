@@ -1,23 +1,17 @@
 #include <iostream>
 #include "ProgramOption.h"
 #include "ABoostDetection.h"
-#include "Classification.h"
-
-#include "opencv2/objdetect.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
-
 
 
 using namespace std;
 
 bool InitModels(ABoostDetection *p_adet) {
 
-    if (!p_adet->LoadModel()){
+    if (!p_adet->LoadModel()) {
         cerr << "ERROR: " << "Loading  detector model of adaboost" << endl;
         return false;
     }
-    cout<<"Model Adaboost is loaded"<<endl;
+    cout << "Model Adaboost is loaded" << endl;
 
 
     return true;
@@ -37,7 +31,6 @@ bool InitVideoCapture(VideoCapture *pCapture, string input_file) {
 }
 
 
-
 int main(int argc, char **argv) {
 
     // vytvoreni konstruktoru a prace se vstupem
@@ -51,7 +44,7 @@ int main(int argc, char **argv) {
     ABoostDetection *adet = new ABoostDetection(opt->GetPathModelAboost());
 
     //nacteni model
-    if (!InitModels(adet)){
+    if (!InitModels(adet)) {
         delete opt;
         delete adet;
         return EXIT_FAILURE;
@@ -72,9 +65,9 @@ int main(int argc, char **argv) {
     VideoCapture capture;
     Mat frame;
 
-    if (opt->GetMode() == 1){
-        if (!InitVideoCapture(&capture, opt->GetCameraRun())){
-            cerr<<"RROOR load camera: "<<opt->GetCameraRun()<<endl;
+    if (opt->GetMode() == 1) {
+        if (!InitVideoCapture(&capture, opt->GetCameraRun())) {
+            cerr << "RROOR load camera: " << opt->GetCameraRun() << endl;
 
             delete opt;
             delete adet;
@@ -84,11 +77,13 @@ int main(int argc, char **argv) {
         // start the clock
         time(&start);
 
-        while (capture.read(frame)){
+        while (capture.read(frame)) {
             if (frame.empty()) {
                 printf(" --(!) No captured frame -- Break!");
                 break;
             }
+
+            resize(frame, frame, Size(640, 480), INTER_CUBIC);
 
             adet->Detection(frame, fps);
             // see how much time has elapsed
@@ -103,13 +98,13 @@ int main(int argc, char **argv) {
             if (counter == (INT_MAX - 1000))
                 counter = 0;
         }
-    } else if (opt->GetMode() == 2){
+    } else if (opt->GetMode() == 2) {
 
         for (int i = 0; i < list_input.size(); ++i) {
-            cout<<list_input.at(i)<<endl;
+            cout << list_input.at(i) << endl;
 
-            if (!InitVideoCapture(&capture, list_input.at(i))){
-                cerr<<"RROOR load file: "<<list_input.at(i)<<endl;
+            if (!InitVideoCapture(&capture, list_input.at(i))) {
+                cerr << "RROOR load file: " << list_input.at(i) << endl;
 
                 delete opt;
                 delete adet;
@@ -118,6 +113,7 @@ int main(int argc, char **argv) {
 
             // start the clock
             time(&start);
+            counter = 0;
 
             while (capture.read(frame)) {
                 if (frame.empty()) {
@@ -125,6 +121,7 @@ int main(int argc, char **argv) {
                     break;
                 }
 
+                resize(frame, frame, Size(640, 480), INTER_CUBIC);
                 adet->Detection(frame, fps);
                 // see how much time has elapsed
                 time(&end);
@@ -140,15 +137,34 @@ int main(int argc, char **argv) {
 
 
             }
-            }
-
-
+        }
     }
+    else {
+        for (int i = 0; i < list_input.size(); ++i) {
+            cout << list_input.at(i) << endl;
+
+            frame = imread(list_input.at(i));
+
+            // start the clock
+            time(&start);
+            counter = 0;
+
+            adet->Detection(frame, fps);
+            // see how much time has elapsed
+            time(&end);
+            // calculate current FPS
+            ++counter;
+            sec = difftime(end, start);
+
+            fps = counter / sec;
+
+            // overflow protection
+            if (counter == (INT_MAX - 1000))
+                counter = 0;
 
 
-
-
-
+        }
+    }
 
 
     delete opt;

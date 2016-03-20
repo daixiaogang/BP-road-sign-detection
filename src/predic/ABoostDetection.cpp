@@ -18,10 +18,8 @@ void ABoostDetection::Detection(Mat frame, double fps) {
     std::vector<Rect> sign;
     Mat frame_gray;
 
-    Mat dst;
-    resize(frame, dst, Size(640, 480), INTER_CUBIC);
 
-    cvtColor(dst, frame_gray, COLOR_BGR2GRAY);
+    cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
     equalizeHist(frame_gray, frame_gray);
 
     vector<int> reject_levels;
@@ -37,14 +35,14 @@ void ABoostDetection::Detection(Mat frame, double fps) {
 
     for (size_t i = 0; i < sign.size(); i++) {
         Point center(sign[i].x + sign[i].width / 2, sign[i].y + sign[i].height / 2);
-        ellipse(dst, center, Size(sign[i].width / 2, sign[i].height / 2), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
+        ellipse(frame, center, Size(sign[i].width / 2, sign[i].height / 2), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
     }
 
-    putText(dst, std::to_string(fps),
+    putText(frame, std::to_string(fps),
             Point(450, 50), 2, 1, Scalar(0, 255, 255));
 
 
-    imshow( "window_name", dst );
-    waitKey(1);
+    imshow( "window_name", frame );
+    waitKey(1000);
 
     }
