@@ -11,7 +11,6 @@
       <sourceFolder url="file://$MODULE_DIR$/Classification.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ABoostDetection.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ABoostDetection.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/PipeLineItem.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ProgramOption.cpp" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />

@@ -56,9 +56,12 @@ public:
         return list;
     }
 
-    std::string GetPathModelAboost(){
-        return m_aboost;
-    }
+    std::string GetPathModelAboost();
+
+
+    int GetMode();
+
+    int GetCameraRun();
 
 };
 

@@ -175,6 +175,10 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
 }
 
 
+std::string ProgramOption::GetPathModelAboost() {
+    return this->m_aboost;
+}
+
 bool ProgramOption::ProcessOption(FileOperation *p_fopt) {
 
     // nacist a ziskat seznam
@@ -187,4 +191,18 @@ bool ProgramOption::ProcessOption(FileOperation *p_fopt) {
 
 
 
+}
+
+int ProgramOption::GetMode() {
+
+    if (this->cam_mode)
+        return 1;
+    else if (this->video_mode)
+        return 2;
+    else
+        return 3;
+}
+
+int ProgramOption::GetCameraRun() {
+    return this->camera;
 }
