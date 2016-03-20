@@ -14,7 +14,7 @@ bool ABoostDetection::LoadModel() {
 }
 
 
-void ABoostDetection::Detection(Mat frame, double fps) {
+vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
     std::vector<Rect> sign;
     Mat frame_gray;
 
@@ -43,6 +43,7 @@ void ABoostDetection::Detection(Mat frame, double fps) {
 
 
     imshow( "window_name", frame );
-    waitKey(1000);
+    waitKey(1);
 
+    return sign;
     }

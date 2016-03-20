@@ -29,7 +29,9 @@ ProgramOption::ProgramOption(int argc, char **argv) {
 void ProgramOption::InitDefaultValues() {
 
     m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/D/cascade.xml";
-    m_svm = "../../../models/models_/model_SVM_classifier";
+    //m_svm = "../../../models/models_/model_SVM_classifier/model_prob";
+    m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_prob";
+    //m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_bin";
 
 
     camera = 0;
@@ -205,4 +207,8 @@ int ProgramOption::GetMode() {
 
 int ProgramOption::GetCameraRun() {
     return this->camera;
+}
+
+std::string ProgramOption::GetPathModelSVM() {
+    return this->m_svm;
 }

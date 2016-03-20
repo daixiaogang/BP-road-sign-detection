@@ -27,7 +27,7 @@ public:
     ABoostDetection(string model_file);
     bool LoadModel();
 
-    void Detection(Mat frame, double fps);
+    vector<Rect> Detection(Mat frame, double fps);
 
 
 };

@@ -1,19 +1,60 @@
 #include <iostream>
 #include "ProgramOption.h"
 #include "ABoostDetection.h"
-
+//#include "Classification.h"
+#include "libSVM.h"
+#include "extractor.h"
 
 using namespace std;
+using namespace cv;
+
+
+class Classify {
+
+private:
+
+    struct svm_model *ModelClasificator;
+
+public:
+
+    void load_modelLibClass(const string model);
+
+
+    double detekuj(vector<float> value);
+
+    double detekuj_prob(vector<float> value);
+
+
+    vector<float> extractHog(Rect_<int> &vector, Mat mat);
+};
+
+
+void Classify::load_modelLibClass(const string model) {
+    cout << "Loading model for LibSVM...." << endl;
+
+
+    if ((this->ModelClasificator = libSVM::getInstance()->loadModelFromFile(model)) == 0) {
+        cerr << "Can't load SVM model " << model << endl;
+    }
+}
+
 
 bool InitModels(ABoostDetection *p_adet) {
 
     if (!p_adet->LoadModel()) {
-        cerr << "ERROR: " << "Loading  detector model of adaboost" << endl;
+        cerr << "ERROR: " << "Loading  detector model of adaboost:" << endl;
         return false;
     }
     cout << "Model Adaboost is loaded" << endl;
 
 
+    /*
+    if (!pClassification->LoadModel()){
+        cerr << "ERROR: " << "Loading  classificator model of svm" << endl;
+        return false;
+    }
+    cout << "Model SVM is loaded" << endl;
+*/
     return true;
 }
 
@@ -43,12 +84,18 @@ int main(int argc, char **argv) {
     // vytvoreni konruktoru ori aboost detektor
     ABoostDetection *adet = new ABoostDetection(opt->GetPathModelAboost());
 
+    //Classification *classify = new Classification(opt->GetPathModelSVM());
+
     //nacteni model
     if (!InitModels(adet)) {
         delete opt;
         delete adet;
         return EXIT_FAILURE;
     }
+
+
+    Classify *classif = new Classify();
+    classif->load_modelLibClass(opt->GetPathModelSVM());
 
     time_t start, end;
 
@@ -85,7 +132,25 @@ int main(int argc, char **argv) {
 
             resize(frame, frame, Size(640, 480), INTER_CUBIC);
 
-            adet->Detection(frame, fps);
+
+            std::vector<Rect> sign;
+            std::vector<float> descriptors;
+
+            sign = adet->Detection(frame, fps);
+
+            if (!sign.empty()) {
+
+                for (int i = 0; i < sign.size(); ++i) {
+
+                    descriptors = classif->extractHog(sign.at(i), frame);
+
+                    //cout<<classif->detekuj(descriptors);
+                    cout << classif->detekuj_prob(descriptors);
+                }
+            }
+
+
+
             // see how much time has elapsed
             time(&end);
             // calculate current FPS
@@ -121,8 +186,21 @@ int main(int argc, char **argv) {
                     break;
                 }
 
-                resize(frame, frame, Size(640, 480), INTER_CUBIC);
-                adet->Detection(frame, fps);
+                std::vector<Rect> sign;
+                std::vector<float> descriptors;
+
+                sign = adet->Detection(frame, fps);
+
+                if (!sign.empty()) {
+
+                    for (int i = 0; i < sign.size(); ++i) {
+
+                        descriptors = classif->extractHog(sign.at(i), frame);
+
+                        //cout<<classif->detekuj(descriptors);
+                        cout << classif->detekuj_prob(descriptors);
+                    }
+                }
                 // see how much time has elapsed
                 time(&end);
                 // calculate current FPS
@@ -148,8 +226,21 @@ int main(int argc, char **argv) {
             // start the clock
             time(&start);
             counter = 0;
+            std::vector<Rect> sign;
+            std::vector<float> descriptors;
 
-            adet->Detection(frame, fps);
+            sign = adet->Detection(frame, fps);
+
+            if (!sign.empty()) {
+
+                for (int i = 0; i < sign.size(); ++i) {
+
+                    descriptors = classif->extractHog(sign.at(i), frame);
+
+                    //cout<<classif->detekuj(descriptors);
+                    cout << classif->detekuj_prob(descriptors);
+                }
+            }
             // see how much time has elapsed
             time(&end);
             // calculate current FPS
@@ -174,5 +265,48 @@ int main(int argc, char **argv) {
 }
 
 
+vector<float> Classify::extractHog(Rect_<int> &faces, Mat mat) {
+    Mat cropedImage = mat(Rect(faces.x, faces.y, faces.width, faces.height));
+
+    std::vector<float> descriptors;
+    descriptors = getHog(cropedImage);
+
+    return descriptors;
+}
+
+double Classify::detekuj(vector<float> value) {
+
+    struct svm_node *svmVecT;
+    svmVecT = (struct svm_node *) malloc((value.size() + 1) * sizeof(struct svm_node));
+    int i;
+    for (i = 0; i < value.size(); i++) {
+        svmVecT[i].index = i + 1;
+        svmVecT[i].value = value.at(i);
+    }
+
+    svmVecT[i].index = -1;   // End of line
+
+    double result = svm_predict(this->ModelClasificator, svmVecT);
+    return result;
+}
+
+double Classify::detekuj_prob(vector<float> value) {
+    struct svm_node *svmVecT;
+    svmVecT = (struct svm_node *) malloc((value.size() + 1) * sizeof(struct svm_node));
+    int i;
+    for (i = 0; i < value.size(); i++) {
+        svmVecT[i].index = i + 1;
+        svmVecT[i].value = value.at(i);
+    }
+
+    svmVecT[i].index = -1;   // End of line
+
+    double prob[1000];
 
 
+    double result = svm_predict_probability(this->ModelClasificator, svmVecT, prob);
+
+    cout << " : " << prob[0] << prob[1] << prob[2] << endl;
+
+    return result;
+}

@@ -2,15 +2,21 @@
 <module type="CPP_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/FileOperation.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/ProgramOption.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ABoostDetection.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Classification.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/svm.def" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/svm.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/svm.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/extractor.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Classification.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ProgramOption.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/FileOperation.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/main.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/FileOperation.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/Classification.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ABoostDetection.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/ABoostDetection.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/libSVM.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/FileOperation.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/extractor.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ProgramOption.cpp" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />

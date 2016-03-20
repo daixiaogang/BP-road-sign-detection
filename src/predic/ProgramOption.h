@@ -57,6 +57,7 @@ public:
     }
 
     std::string GetPathModelAboost();
+    std::string GetPathModelSVM();
 
 
     int GetMode();

@@ -38,7 +38,6 @@ bool FileOperation::LoadDir(std::string input) {
     while (itr != boost::filesystem::recursive_directory_iterator()) {
 
         if (!IsDirectory(itr->path().string())) {
-            std::cout << itr->path().string() << std::endl;//delete
             list.push_back(itr->path().string());
         }
         ++itr;
@@ -56,7 +55,6 @@ bool FileOperation::LoadFile(std::string input) {
         while (text.good()) {
             getline(text, line);
             list.push_back(line);
-            std::cout << line << std::endl;//delete
         }
         text.close();
     }
