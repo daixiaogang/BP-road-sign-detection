@@ -73,7 +73,13 @@ std::vector<std::string> FileOperation::GetFilesVector() {
 bool FileOperation::IsDirectory(std::string input) {
 
     path p(input);
-    return is_directory(p);
+
+    if (exists(p)) {
+        if (is_directory(p))
+            return true;
+    }
+
+    return false;
 }
 
 bool FileOperation::IsFileExist(std::string input) {

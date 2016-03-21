@@ -33,7 +33,7 @@ private:
 
 
     int camera;
-    bool show, no_class, clasify, debug, cross;
+    bool show, no_class, clasify, debug, cross, output_mode;
     bool image_mode, video_mode, cam_mode;
 
 public:
@@ -59,10 +59,19 @@ public:
     std::string GetPathModelAboost();
     std::string GetPathModelSVM();
 
+    std::string GetOutputPath();
+
 
     int GetMode();
 
+
+
     int GetCameraRun();
+
+    // udelat na bool
+    int ToolMode();
+
+    bool GetModeShow();
 
 };
 

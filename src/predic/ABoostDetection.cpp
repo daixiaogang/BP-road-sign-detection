@@ -42,8 +42,8 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
             Point(450, 50), 2, 1, Scalar(0, 255, 255));
 
 
-    imshow( "window_name", frame );
-    waitKey(1);
+    //imshow( "window_name", frame );
+    //waitKey(1);
 
     return sign;
     }

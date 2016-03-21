@@ -33,10 +33,12 @@ void ProgramOption::InitDefaultValues() {
     m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_prob";
     //m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_bin";
 
+    this->output = "/tmp/o";
+
 
     camera = 0;
     show = false, no_class = false, clasify = false, debug = false, cross = false;
-    image_mode = false, video_mode = false, cam_mode = false;
+    image_mode = false, video_mode = false, cam_mode = false, output_mode = false;
 
 }
 
@@ -58,7 +60,7 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
                     ("video,v", po::value<std::string>(&input_path),
                      "File or directory input videos. If not chosen than default camera mode run.")
                     ("camera,e", po::value<int>(&camera), "Selectin of the camera. Default 0.")
-                    ("output,o", po::value<std::string>(&output), "Directory output result")
+                    ("output,o", po::value<std::string>(&this->output), "Directory output result")
                     ("show,s", "Show current image or frame by video")
                     ("annotation,a", po::value<std::string>(&annotation), "File of output annotation")
                     ("classification,c", "Make only classification")
@@ -152,6 +154,8 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
                     std::cerr << "ERROR: "<< "Directory of output not exist> " << output<<endl;
                     return ERROR_IN_COMMAND_LINE;
                 }
+                this->output_mode = true;
+
                 cout << "output" << endl;
             }
 
@@ -201,7 +205,7 @@ int ProgramOption::GetMode() {
         return 1;
     else if (this->video_mode)
         return 2;
-    else
+    else if (this->image_mode)
         return 3;
 }
 
@@ -211,4 +215,20 @@ int ProgramOption::GetCameraRun() {
 
 std::string ProgramOption::GetPathModelSVM() {
     return this->m_svm;
+}
+
+int ProgramOption::ToolMode() {
+
+    if (this->output_mode)
+        return 1;
+
+    return 0;
+}
+
+std::string ProgramOption::GetOutputPath() {
+    return this->output;
+}
+
+bool ProgramOption::GetModeShow() {
+    return this->show;
 }

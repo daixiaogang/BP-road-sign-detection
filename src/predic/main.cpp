@@ -4,6 +4,7 @@
 //#include "Classification.h"
 #include "libSVM.h"
 #include "extractor.h"
+#include "lutTable.h"
 
 using namespace std;
 using namespace cv;
@@ -111,6 +112,7 @@ int main(int argc, char **argv) {
 
     VideoCapture capture;
     Mat frame;
+    Mat original;
 
     if (opt->GetMode() == 1) {
         if (!InitVideoCapture(&capture, opt->GetCameraRun())) {
@@ -131,24 +133,52 @@ int main(int argc, char **argv) {
             }
 
             resize(frame, frame, Size(640, 480), INTER_CUBIC);
-
+            original = frame.clone();
 
             std::vector<Rect> sign;
             std::vector<float> descriptors;
 
             sign = adet->Detection(frame, fps);
 
+
             if (!sign.empty()) {
 
                 for (int i = 0; i < sign.size(); ++i) {
 
-                    descriptors = classif->extractHog(sign.at(i), frame);
+                    descriptors = classif->extractHog(sign.at(i), original);
 
                     //cout<<classif->detekuj(descriptors);
-                    cout << classif->detekuj_prob(descriptors);
+
+                    Mat cropedImage = original(Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
+
+                    string pat = "/tmp/aa/" + to_string(counter) + ".jpg";
+                    imwrite(pat, cropedImage);
+
+
+                    double index = classif->detekuj_prob(descriptors);
+                    cout << index;
+
+                    Mat small_image = imread(LUT_image_filename[abs((int) index) - 1]);
+                    resize(small_image, small_image, Size(32, 32), INTER_CUBIC);
+
+
+                    try {
+
+                        small_image.copyTo(
+                                frame(cv::Rect(sign.at(i).x, sign.at(i).y, small_image.cols, small_image.rows)));
+                    }
+                    catch (int e) {
+                        cerr << "Ohraniceni" << endl;
+                    }
+
                 }
             }
 
+            if (opt->GetModeShow()) {
+
+                imshow("window_name", frame);
+                waitKey(1);
+            }
 
 
             // see how much time has elapsed
@@ -176,9 +206,17 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
 
+
+            string pat = "/tmp/" + to_string(i) + ".avi";
+            VideoWriter video(pat, CV_FOURCC('D', 'I', 'V', 'X'), 15, Size(640, 480), true);
+
+
+
+
             // start the clock
             time(&start);
             counter = 0;
+            fps = 0;
 
             while (capture.read(frame)) {
                 if (frame.empty()) {
@@ -186,21 +224,60 @@ int main(int argc, char **argv) {
                     break;
                 }
 
+                resize(frame, frame, Size(640, 480), INTER_CUBIC);
+                original = frame.clone();
+
                 std::vector<Rect> sign;
                 std::vector<float> descriptors;
 
                 sign = adet->Detection(frame, fps);
 
+
                 if (!sign.empty()) {
 
                     for (int i = 0; i < sign.size(); ++i) {
 
-                        descriptors = classif->extractHog(sign.at(i), frame);
+                        descriptors = classif->extractHog(sign.at(i), original);
 
                         //cout<<classif->detekuj(descriptors);
-                        cout << classif->detekuj_prob(descriptors);
+
+                        Mat cropedImage = original(
+                                Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
+
+                        string pat = "/tmp/aa/" + to_string(counter) + ".jpg";
+                        imwrite(pat, cropedImage);
+
+
+                        double index = classif->detekuj_prob(descriptors);
+                        cout << index;
+
+                        Mat small_image = imread(LUT_image_filename[abs((int) index) - 1]);
+                        resize(small_image, small_image, Size(32, 32), INTER_CUBIC);
+
+
+                        try {
+
+                            small_image.copyTo(
+                                    frame(cv::Rect(sign.at(i).x, sign.at(i).y, small_image.cols, small_image.rows)));
+                        }
+                        catch (int e) {
+                            cerr << "Ohraniceni" << endl;
+                        }
+
                     }
                 }
+
+                if (opt->GetModeShow()) {
+
+                    imshow("window_name", frame);
+                    waitKey(1);
+                }
+
+
+                video.write(frame);
+
+
+
                 // see how much time has elapsed
                 time(&end);
                 // calculate current FPS
@@ -267,6 +344,9 @@ int main(int argc, char **argv) {
 
 vector<float> Classify::extractHog(Rect_<int> &faces, Mat mat) {
     Mat cropedImage = mat(Rect(faces.x, faces.y, faces.width, faces.height));
+
+    imwrite("/tmp/aa.jpg", cropedImage);
+
 
     std::vector<float> descriptors;
     descriptors = getHog(cropedImage);

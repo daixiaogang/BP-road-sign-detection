@@ -15,6 +15,7 @@
       <sourceFolder url="file://$MODULE_DIR$/main.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ABoostDetection.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/libSVM.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/lutTable.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/FileOperation.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/extractor.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ProgramOption.cpp" isTestSource="false" />

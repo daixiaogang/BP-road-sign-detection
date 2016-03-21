@@ -24,7 +24,8 @@ if (NOT OpenCV_FOUND)
 endif ()
 
 set(SOURCE_FILES main.cpp ProgramOption.cpp ProgramOption.h FileOperation.cpp FileOperation.h ABoostDetection.cpp
-        ABoostDetection.h Classification.cpp Classification.h libSVM.h svm.cpp svm.def svm.h extractor.cpp extractor.h)
+        ABoostDetection.h Classification.cpp Classification.h libSVM.h svm.cpp svm.def svm.h extractor.cpp extractor.h
+        lutTable.h)
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
     add_executable(predic ${SOURCE_FILES})
