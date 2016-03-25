@@ -28,7 +28,9 @@ ProgramOption::ProgramOption(int argc, char **argv) {
 
 void ProgramOption::InitDefaultValues() {
 
-    m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/D/cascade.xml";
+    //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/D/cascade.xml";
+    m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/1/cascade.xml";
+    //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/Eye/haarcascade_eye.xml";
     //m_svm = "../../../models/models_/model_SVM_classifier/model_prob";
     m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_prob";
     //m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_bin";
@@ -231,4 +233,8 @@ std::string ProgramOption::GetOutputPath() {
 
 bool ProgramOption::GetModeShow() {
     return this->show;
+}
+
+bool ProgramOption::GetModelClassif() {
+    return this->no_class;
 }

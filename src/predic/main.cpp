@@ -113,8 +113,11 @@ int main(int argc, char **argv) {
     VideoCapture capture;
     Mat frame;
     Mat original;
+    int cont = 0;
+    string WindowName;
 
     if (opt->GetMode() == 1) {
+        WindowName = "Camera";
         if (!InitVideoCapture(&capture, opt->GetCameraRun())) {
             cerr << "RROOR load camera: " << opt->GetCameraRun() << endl;
 
@@ -125,6 +128,7 @@ int main(int argc, char **argv) {
 
         // start the clock
         time(&start);
+        cont += 1;
 
         while (capture.read(frame)) {
             if (frame.empty()) {
@@ -141,7 +145,7 @@ int main(int argc, char **argv) {
             sign = adet->Detection(frame, fps);
 
 
-            if (!sign.empty()) {
+            if (!sign.empty() && !opt->GetModelClassif()) {
 
                 for (int i = 0; i < sign.size(); ++i) {
 
@@ -151,7 +155,7 @@ int main(int argc, char **argv) {
 
                     Mat cropedImage = original(Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
 
-                    string pat = "/tmp/aa/" + to_string(counter) + ".jpg";
+                    string pat = "/tmp/aa/" + to_string(cont) + "-" + to_string(counter) + ".jpg";
                     imwrite(pat, cropedImage);
 
 
@@ -176,8 +180,12 @@ int main(int argc, char **argv) {
 
             if (opt->GetModeShow()) {
 
-                imshow("window_name", frame);
+                namedWindow(WindowName, WINDOW_AUTOSIZE);
+                imshow(WindowName, frame);
                 waitKey(1);
+
+                //imshow("window_name", frame);
+                //waitKey(1);
             }
 
 
@@ -194,10 +202,11 @@ int main(int argc, char **argv) {
                 counter = 0;
         }
     } else if (opt->GetMode() == 2) {
+        WindowName = "Video";
 
         for (int i = 0; i < list_input.size(); ++i) {
             cout << list_input.at(i) << endl;
-
+            cout << "chyba" << endl;
             if (!InitVideoCapture(&capture, list_input.at(i))) {
                 cerr << "RROOR load file: " << list_input.at(i) << endl;
 
@@ -206,12 +215,9 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
 
-
+            cont += 1;
             string pat = "/tmp/" + to_string(i) + ".avi";
             VideoWriter video(pat, CV_FOURCC('D', 'I', 'V', 'X'), 15, Size(640, 480), true);
-
-
-
 
             // start the clock
             time(&start);
@@ -232,8 +238,18 @@ int main(int argc, char **argv) {
 
                 sign = adet->Detection(frame, fps);
 
-
+                // delete
                 if (!sign.empty()) {
+                    Mat cropedImage = original(
+                            Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
+
+                    string pat = "/tmp/aa/" + to_string(cont) + "-" + to_string(counter) + ".jpg";
+                    imwrite(pat, cropedImage);
+                    cropedImage.release();
+                }
+
+                /*
+                if (!sign.empty()&& !opt->GetModelClassif()) {
 
                     for (int i = 0; i < sign.size(); ++i) {
 
@@ -244,7 +260,7 @@ int main(int argc, char **argv) {
                         Mat cropedImage = original(
                                 Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
 
-                        string pat = "/tmp/aa/" + to_string(counter) + ".jpg";
+                        string pat = "/tmp/aa/" + to_string(cont)+"-"+to_string(counter) + ".jpg";
                         imwrite(pat, cropedImage);
 
 
@@ -266,10 +282,12 @@ int main(int argc, char **argv) {
 
                     }
                 }
+                 */
 
                 if (opt->GetModeShow()) {
 
-                    imshow("window_name", frame);
+                    namedWindow(WindowName, WINDOW_AUTOSIZE);
+                    imshow(WindowName, frame);
                     waitKey(1);
                 }
 
@@ -291,10 +309,15 @@ int main(int argc, char **argv) {
                     counter = 0;
 
 
+                sign.clear();
+                descriptors.clear();
+                frame.release();
+                original.release();
             }
         }
     }
     else {
+        WindowName = "Image";
         for (int i = 0; i < list_input.size(); ++i) {
             cout << list_input.at(i) << endl;
 
@@ -308,16 +331,49 @@ int main(int argc, char **argv) {
 
             sign = adet->Detection(frame, fps);
 
-            if (!sign.empty()) {
+            if (!sign.empty() && !opt->GetModelClassif()) {
 
                 for (int i = 0; i < sign.size(); ++i) {
 
-                    descriptors = classif->extractHog(sign.at(i), frame);
+                    descriptors = classif->extractHog(sign.at(i), original);
 
                     //cout<<classif->detekuj(descriptors);
-                    cout << classif->detekuj_prob(descriptors);
+
+                    Mat cropedImage = original(
+                            Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
+
+                    string pat = "/tmp/aa/" + to_string(cont) + "-" + to_string(counter) + ".jpg";
+                    imwrite(pat, cropedImage);
+
+
+                    double index = classif->detekuj_prob(descriptors);
+                    cout << index;
+
+                    Mat small_image = imread(LUT_image_filename[abs((int) index) - 1]);
+                    resize(small_image, small_image, Size(32, 32), INTER_CUBIC);
+
+
+                    try {
+
+                        small_image.copyTo(
+                                frame(cv::Rect(sign.at(i).x, sign.at(i).y, small_image.cols, small_image.rows)));
+                    }
+                    catch (int e) {
+                        cerr << "Ohraniceni" << endl;
+                    }
+
                 }
             }
+
+
+            if (opt->GetModeShow()) {
+
+                namedWindow(WindowName, WINDOW_AUTOSIZE);
+                imshow(WindowName, frame);
+                waitKey(1);
+            }
+
+
             // see how much time has elapsed
             time(&end);
             // calculate current FPS

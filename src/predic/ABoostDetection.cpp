@@ -20,17 +20,32 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
 
 
     cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
-    equalizeHist(frame_gray, frame_gray);
+    //equalizeHist(frame_gray, frame_gray);
 
     vector<int> reject_levels;
     vector<double> level_weights;
 
 
-    this->detector_cascade.detectMultiScale(frame_gray, sign, 2, 2, 0 | CASCADE_SCALE_IMAGE);
+    //this->detector_cascade.detectMultiScale(frame_gray, sign, 2, 2, 0 | CASCADE_SCALE_IMAGE);
 
 
-    //this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 1.1, 1, CASCADE_SCALE_IMAGE,
-    //                              Size(), Size(), true);
+    //this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, 1.3,3, 0);
+
+    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 2, 2, CASCADE_SCALE_IMAGE,
+                                  Size(), Size(), true);
+
+
+
+    if (!reject_levels.empty()){
+        cout<<"\nreject level"<<reject_levels.at(0)<<endl;
+    }
+
+
+    if (!level_weights.empty())
+    {
+        cout<<level_weights.at(0)<<endl;
+    }
+
 
 
     for (size_t i = 0; i < sign.size(); i++) {

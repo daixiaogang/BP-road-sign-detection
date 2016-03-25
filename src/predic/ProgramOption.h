@@ -73,6 +73,9 @@ public:
 
     bool GetModeShow();
 
+
+    bool GetModelClassif();
+
 };
 
 
