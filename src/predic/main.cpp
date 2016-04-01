@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
     VideoCapture capture;
     Mat frame;
     Mat original;
-    int cont = 0;
+    int cont = 84;
     string WindowName;
 
     if (opt->GetMode() == 1) {
@@ -204,9 +204,9 @@ int main(int argc, char **argv) {
     } else if (opt->GetMode() == 2) {
         WindowName = "Video";
 
-        for (int i = 0; i < list_input.size(); ++i) {
-            cout << list_input.at(i) << endl;
-            cout << "chyba" << endl;
+
+        for (int i = 0; i < list_input.size(); i++) {
+            cout << list_input.at(i)<<":"<<list_input.size() << endl;
             if (!InitVideoCapture(&capture, list_input.at(i))) {
                 cerr << "RROOR load file: " << list_input.at(i) << endl;
 
@@ -215,6 +215,7 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
 
+            cout << "chyba" << endl;
             cont += 1;
             string pat = "/tmp/" + to_string(i) + ".avi";
             VideoWriter video(pat, CV_FOURCC('D', 'I', 'V', 'X'), 15, Size(640, 480), true);
@@ -238,27 +239,14 @@ int main(int argc, char **argv) {
 
                 sign = adet->Detection(frame, fps);
 
-                // delete
-                if (!sign.empty()) {
-                    Mat cropedImage = original(
-                            Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
 
-                    string pat = "/tmp/aa/" + to_string(cont) + "-" + to_string(counter) + ".jpg";
-                    imwrite(pat, cropedImage);
-                    cropedImage.release();
-                }
-
-                /*
                 if (!sign.empty()&& !opt->GetModelClassif()) {
+                    for (int j = 0; j < sign.size(); ++j) {
 
-                    for (int i = 0; i < sign.size(); ++i) {
-
-                        descriptors = classif->extractHog(sign.at(i), original);
-
-                        //cout<<classif->detekuj(descriptors);
+                        descriptors = classif->extractHog(sign.at(j), original);
 
                         Mat cropedImage = original(
-                                Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
+                                Rect(sign.at(j).x, sign.at(j).y, sign.at(j).width, sign.at(j).height));
 
                         string pat = "/tmp/aa/" + to_string(cont)+"-"+to_string(counter) + ".jpg";
                         imwrite(pat, cropedImage);
@@ -274,7 +262,7 @@ int main(int argc, char **argv) {
                         try {
 
                             small_image.copyTo(
-                                    frame(cv::Rect(sign.at(i).x, sign.at(i).y, small_image.cols, small_image.rows)));
+                                    frame(cv::Rect(sign.at(j).x, sign.at(j).y, small_image.cols, small_image.rows)));
                         }
                         catch (int e) {
                             cerr << "Ohraniceni" << endl;
@@ -282,19 +270,17 @@ int main(int argc, char **argv) {
 
                     }
                 }
-                 */
+
 
                 if (opt->GetModeShow()) {
 
                     namedWindow(WindowName, WINDOW_AUTOSIZE);
                     imshow(WindowName, frame);
                     waitKey(1);
+
                 }
 
-
                 video.write(frame);
-
-
 
                 // see how much time has elapsed
                 time(&end);
@@ -309,11 +295,17 @@ int main(int argc, char **argv) {
                     counter = 0;
 
 
-                sign.clear();
+                //sign.clear();
                 descriptors.clear();
                 frame.release();
                 original.release();
             }
+
+
+            capture.release();
+            video.release();
+
+
         }
     }
     else {
