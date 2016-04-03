@@ -30,7 +30,7 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
 
     //this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, 1.3,3, 0);
 
-    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 2, 2, CASCADE_SCALE_IMAGE,
+    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 2, 3, CASCADE_SCALE_IMAGE,
                                   Size(), Size(), true);
 
 
@@ -52,8 +52,7 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
         ellipse(frame, center, Size(sign[i].width / 2, sign[i].height / 2), 0, 0, 360, Scalar(0, 255, 0), 4, 8, 0);
     }
 
-    putText(frame, std::to_string(fps),
-            Point(450, 50), 2, 1, Scalar(0, 255, 255));
+    putText(frame, std::to_string(fps), Point(frame.cols-200, 50), 2, 1, Scalar(0, 255, 255));
 
 
     //imshow( "window_name", frame );

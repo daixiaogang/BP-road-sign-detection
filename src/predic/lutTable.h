@@ -11,7 +11,6 @@
 
 
 const std::string LUT_image_filename[] = {
-
         "/home/maiikeru/bitbucket/BP-road-sign-detection/data_sets/icons/0.jpg",
         "/home/maiikeru/bitbucket/BP-road-sign-detection/data_sets/icons/1.jpg",
         "/home/maiikeru/bitbucket/BP-road-sign-detection/data_sets/icons/2.jpg",
