@@ -4,7 +4,7 @@
 #include "Classification.h"
 #include "libSVM.h"
 #include "extractor.h"
-
+#include <algorithm>
 using namespace std;
 using namespace cv;
 
@@ -212,7 +212,6 @@ int main(int argc, char **argv) {
     } else if (opt->GetMode() == 2) {
         WindowName = "Video";
 
-
         for (int i = 0; i < list_input.size(); i++) {
             cout << list_input.at(i) << ":" << list_input.size() << endl;
             if (!InitVideoCapture(&capture, list_input.at(i))) {
@@ -225,7 +224,7 @@ int main(int argc, char **argv) {
 
             cont += 1;
             string pat = "/tmp/" + to_string(i) + ".avi";
-            VideoWriter video(pat, CV_FOURCC('D', 'I', 'V', 'X'), capture.get(CV_CAP_PROP_FPS), Size(640, 480), true);
+            //VideoWriter video(pat, CV_FOURCC('D', 'I', 'V', 'X'), capture.get(CV_CAP_PROP_FPS), Size(640, 480), true);
 
             // start the clock
             counter = 0;
@@ -251,6 +250,10 @@ int main(int argc, char **argv) {
 
                 if (!sign.empty() && !opt->GetModelClassif()) {
                     for (int j = 0; j < sign.size(); ++j) {
+
+                        Mat cropedImage = original(Rect(sign.at(j).x, sign.at(j).y, sign.at(j).width, sign.at(j).height));
+                        imwrite("/tmp/aa/" + to_string(counter) + ".jpg", cropedImage);
+
                         td = (double) getTickCount();
 
                         descriptors = classif->extractHog(sign.at(j), original);
@@ -289,7 +292,7 @@ int main(int argc, char **argv) {
 
                 }
 
-                video.write(frame);
+                //video.write(frame);
 
 
                 //sign.clear();
@@ -302,11 +305,12 @@ int main(int argc, char **argv) {
                 cout << "QQ:" << t << ":" << 1 / t << ":" << td << ":" << tc <<":" <<te<< endl;
 
                 fps = 1 / t;
+                counter++;
             }
 
 
             capture.release();
-            video.release();
+            //video.release();
 
 
         }
@@ -396,9 +400,6 @@ int main(int argc, char **argv) {
 vector<float> Classify::extractHog(Rect_<int> &faces, Mat mat) {
     Mat cropedImage = mat(Rect(faces.x, faces.y, faces.width, faces.height));
 
-    //imwrite("/tmp/aa.jpg", cropedImage);
-
-
     std::vector<float> descriptors;
     descriptors = getHog(cropedImage);
     cropedImage.release();
@@ -423,8 +424,12 @@ double Classify::detekuj(vector<float> value) {
 }
 
 double Classify::detekuj_prob(vector<float> value) {
+
+
     struct svm_node *svmVecT;
     svmVecT = (struct svm_node *) malloc((value.size() + 1) * sizeof(struct svm_node));
+
+
     int i;
     for (i = 0; i < value.size(); i++) {
         svmVecT[i].index = i + 1;
@@ -433,11 +438,21 @@ double Classify::detekuj_prob(vector<float> value) {
 
     svmVecT[i].index = -1;   // End of line
 
-    double prob[1000];
+    double prob[45];
 
-
+    double td = (double) getTickCount();
     double result = svm_predict_probability(this->ModelClasificator, svmVecT, prob);
+    td = ((double) getTickCount() - td) / getTickFrequency();
+    cout<<value.size() + 1<<":"<<td<<endl;
 
+    //sort(prob, prob+45);
 
+    cerr<<result<<":"<<prob[int (abs(result) +1)]<<endl;
+    /*
+    for (size_t i = 0; i != 45; ++i)
+        cerr << prob[i] << " ";
+    cerr<<endl;
+*/
+    free( svmVecT);
     return result;
 }

@@ -29,11 +29,12 @@ ProgramOption::ProgramOption(int argc, char **argv) {
 void ProgramOption::InitDefaultValues() {
 
     //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/D/cascade.xml";
-    m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/1/cascade.xml";
+    //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/1/cascade.xml";
+    m_aboost = "/home/maiikeru/Documents/Detector/models/8/cascade.xml";
     //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/Eye/haarcascade_eye.xml";
     //m_svm = "../../../models/models_/model_SVM_classifier/model_prob";
-    m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_prob";
-    //m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_bin";
+    //m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_prob";
+    m_svm = "/home/maiikeru/Downloads/model_hog/model";
 
     this->output = "/tmp/o";
 
