@@ -33,3 +33,5 @@ src/*/build/
 # Models
 models/
 
+# Clion  file
+src/*/.idea/
