@@ -31,12 +31,18 @@ private:
 
     int camera;
     bool show, no_class, clasify, debug, cross, output_mode;
-    bool image_mode, video_mode, cam_mode;
+    bool image_mode, video_mode, cam_mode, help;
+
+
+    FileOperation *fopt;
 
 public:
 
 
     ProgramOption(int argc, char **argv);
+
+
+    int finish;
 
     virtual ~ProgramOption();
 
@@ -47,6 +53,9 @@ public:
 
 
     bool ProcessOption(FileOperation *p_fopt);
+
+
+    bool CreateDir(std::string dir_name);
 
 
     std::vector<std::string> GetVectorOfFiles() {
@@ -61,8 +70,6 @@ public:
 
     int GetMode();
 
-
-
     int GetCameraRun();
 
     // udelat na bool
@@ -72,6 +79,12 @@ public:
 
 
     bool GetModelClassif();
+
+    bool GetModeCross();
+
+    bool GetModeDebug();
+
+    bool GetModeHelp();
 
 };
 

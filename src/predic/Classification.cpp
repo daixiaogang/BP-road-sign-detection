@@ -29,7 +29,6 @@ bool Classification::LoadImagesIcon() {
 
     for (int i = 0; i < list.size(); ++i) {
         this->images_icon.push_back(cv::imread(LUT_image_filename[i]));
-        cout << LUT_image_filename[i] << endl;
     }
 
 
@@ -49,8 +48,7 @@ bool Classification::CheckRoi(int i, int i1) {
 Classification::~Classification() {
     freeMem();
 
-    delete this->model_label;
-
+    delete  this->predic_prob;
 }
 
 void Classification::freeMem() {
@@ -60,7 +58,7 @@ void Classification::freeMem() {
 
 libsvm::svm_model *Classification::loadModelFromFile(bool *pBoolean) {
 
-    cout<<"QQ"<<endl;
+    cout << "QQ" << endl;
     //this->freeMem();
     setlocale(LC_NUMERIC, "C");
     setlocale(LC_ALL, "POSIX");
@@ -79,7 +77,7 @@ libsvm::svm_model *Classification::loadModelFromFile(bool *pBoolean) {
     int classNr = svm_get_nr_class(model);
     int labels[classNr];
 
-    this->model_label  = new int[classNr];
+    this->classesN = classNr;
 
     for (int i = 0; i < classNr; ++i) {
         labels[i] = 0;
@@ -87,11 +85,7 @@ libsvm::svm_model *Classification::loadModelFromFile(bool *pBoolean) {
     svm_get_labels(model, labels);
 
     for (int i = 0; i < classNr; ++i) {
-       this->model_label[i] = (int) fabs(labels[i]);
         this->label_model.push_back(fabs(labels[i]));
-
-
-        cout<<labels[i]<<endl;
     }
 
 
@@ -120,10 +114,12 @@ double Classification::detekuj_prob(vector<float> value) {
 
     svmVecT[i].index = -1;   // End of line
 
-    double prob[45];
+
+    this->predic_prob = new double[this->classesN];
+
 
     double td = (double) cv::getTickCount();
-    double result = svm_predict_probability(this->model, svmVecT, prob);
+    double result = svm_predict_probability(this->model, svmVecT, this->predic_prob);
     td = ((double) cv::getTickCount() - td) / cv::getTickFrequency();
     cout << td << endl;
 
@@ -132,18 +128,17 @@ double Classification::detekuj_prob(vector<float> value) {
 
     for (; j < this->label_model.size(); ++j) {
 
-        if ((fabs(result)) == this->label_model.at(j))
-        {
-            cout<<"Q:"<<j<<endl;
+        if ((fabs(result)) == this->label_model.at(j)) {
+            cout << "Q:" << j << endl;
             break;
         }
     }
 
 
-    cerr << result <<"W:"<<j<< ":" << prob[j] << endl;
+    cerr << result << "W:" << j << ":" << this->predic_prob[j] << endl;
 
-    for (size_t i = 0; i != 45; ++i)
-        cerr << prob[i] << " ";
+    for (size_t i = 0; i != this->classesN; ++i)
+        cerr << this->predic_prob[i] << " ";
     cerr << endl;
 
     free(svmVecT);
@@ -165,18 +160,16 @@ bool Classification::loadModel() {
 
     bool error = true;
 
-    cout<<"A"<<endl;
+    cout << "A" << endl;
     this->model = this->loadModelFromFile(&error);
 
-    cout<<"B"<<endl;
+    cout << "B" << endl;
 
     return error;
 }
 
 void Classification::predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> sign) {
     for (int j = 0; j < sign.size(); ++j) {
-
-
 
         std::vector<float> descriptors = this->extractHog(sign.at(j), original);
         double index = this->detekuj_prob(descriptors);
@@ -192,4 +185,51 @@ void Classification::predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> si
             small_image.release();
         }
     }
+}
+
+
+void Classification::predicCross(cv::Mat original, vector<cv::Rect> sign, string roc_file, string msr_file) {
+    for (int j = 0; j < sign.size(); ++j) {
+
+        // Extract hog
+        std::vector<float> descriptors = this->extractHog(sign.at(j), original);
+
+        //Prediction
+        double index = this->detekuj_prob(descriptors);
+
+        // Write result to files
+        ofstream f_c_roc, f_c_msr;
+        f_c_roc.open(roc_file, ios::app);
+        f_c_msr.open(msr_file, ios::app);
+
+        f_c_msr << index << endl;
+        for (int i = 0; i < this->classesN; ++i) {
+            f_c_roc<<this->predic_prob[i]<<" ";
+        }
+        f_c_roc<<"\n";
+
+        // Close files
+        f_c_msr.close();
+        f_c_roc.close();
+
+    }
+}
+
+void Classification::WriteLabel(string filename) {
+
+    ofstream file;
+    file.open(filename, ios::out);
+
+    // Write labels
+    if (file.good()) {
+        file << "labels ";
+
+        for (int i = 0; i < this->label_model.size(); ++i) {
+            file << this->label_model.at(i) << " ";
+        }
+        file << "\n";
+    }
+
+    file.close();
+
 }

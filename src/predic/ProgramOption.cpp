@@ -12,15 +12,21 @@ ProgramOption::~ProgramOption() {
 ProgramOption::ProgramOption(int argc, char **argv) {
     InitDefaultValues();
 
-    FileOperation *fopt = new FileOperation();
+    fopt = new FileOperation();
 
 
     int ret = ParseArgument(argc, argv, fopt);
     if (ret != 0) {
         std::cerr << "Chyba programoptiondi" << std::endl;
+        this->finish = ret;
+    }
+    else{
+
     }
 
+
     ProcessOption(fopt);
+
 
 
     delete fopt;
@@ -36,12 +42,16 @@ void ProgramOption::InitDefaultValues() {
     //m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_prob";
     m_svm = "/home/maiikeru/Downloads/model_hog/model";
 
-    this->output = "/tmp/o";
+    this->output = "/tmp/output";
 
 
     camera = 0;
     show = false, no_class = false, clasify = false, debug = false, cross = false;
     image_mode = false, video_mode = false, cam_mode = false, output_mode = false;
+    help = false;
+
+
+    finish = 0;
 
 }
 
@@ -81,6 +91,8 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
                 std::cout << "Basic Command Line Parameter App" << std::endl
                 << desc << std::endl;
                 cout << "help" << endl;
+                this->help = true;
+
                 return SUCCESS;
             }
 
@@ -151,11 +163,22 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
             }
 
             if (vm.count("output")) {
-                cout<<output<<endl;
+
+                this->output =vm["output"].as<std::string>();
+                cout <<this->output << endl;
+
+
                 if (!p_fopt->IsDirectory(output))
                 {
-                    std::cerr << "ERROR: "<< "Directory of output not exist> " << output<<endl;
-                    return ERROR_IN_COMMAND_LINE;
+                    boost::filesystem::path dir(this->output);
+                    boost::filesystem::create_directory(dir);
+
+                    if (!p_fopt->IsDirectory(output)){
+                        std::cerr << "ERROR: "<< "Directory of output not exist> " << output<<endl;
+                        return ERROR_IN_COMMAND_LINE;
+
+                    }
+
                 }
                 this->output_mode = true;
 
@@ -208,8 +231,13 @@ int ProgramOption::GetMode() {
         return 1;
     else if (this->video_mode)
         return 2;
-    else if (this->image_mode)
+    else if (this->image_mode && !this->cross)
         return 3;
+    else if (this->image_mode && this->cross)
+        return 4;
+    else
+        return 5;
+
 }
 
 int ProgramOption::GetCameraRun() {
@@ -238,4 +266,29 @@ bool ProgramOption::GetModeShow() {
 
 bool ProgramOption::GetModelClassif() {
     return this->no_class;
+}
+
+bool ProgramOption::GetModeCross() {
+    return this->cross;
+}
+
+bool ProgramOption::GetModeDebug() {
+    return this->debug;
+}
+
+bool ProgramOption::GetModeHelp() {
+    return this->help;
+}
+
+bool ProgramOption::CreateDir(std::string dir_name) {
+    boost::filesystem::path dir(dir_name);
+    boost::filesystem::create_directory(dir);
+
+    if (!fopt->IsDirectory(dir_name)){
+        std::cerr << "ERROR: "<< "Directory of output do not create> " << dir_name<<endl;
+        return false;
+
+    }
+
+    return true;
 }

@@ -38,7 +38,12 @@ bool FileOperation::LoadDir(std::string input) {
     while (itr != boost::filesystem::recursive_directory_iterator()) {
 
         if (!IsDirectory(itr->path().string())) {
-            list.push_back(itr->path().string());
+            if (itr->path().extension() == ".ppm" || itr->path().extension() == ".jpeg" ||
+                itr->path().extension() == ".png" || itr->path().extension() == ".avi" ||
+                itr->path().extension() == ".mp4" || itr->path().extension() == ".3gp"){
+
+                list.push_back(itr->path().string());
+            }
         }
         ++itr;
     }
@@ -62,7 +67,6 @@ bool FileOperation::LoadFile(std::string input) {
         std::cerr << "Unable to open file" << input << std::endl;
         return false;
     }
-
     return true;
 }
 

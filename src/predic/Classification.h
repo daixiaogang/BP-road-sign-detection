@@ -24,7 +24,12 @@ private:
     vector<cv::Mat> images_icon;
 
 
-    int *model_label;
+    double *predic_prob;
+
+
+    int classesN;
+
+
 
     vector<double > label_model;
 
@@ -62,6 +67,9 @@ public:
     ~Classification();
 
     void predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> sign);
+    void predicCross(cv::Mat original, vector<cv::Rect> sign, string basicString, string string1);
+
+    void WriteLabel(string filename);
 };
 
 
