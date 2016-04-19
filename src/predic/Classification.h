@@ -7,6 +7,13 @@
 #include <iostream>
 #include <opencv2/core/mat.hpp>
 #include "lutTable.h"
+#include "extractor.h"
+
+namespace libsvm {
+#include "Library/SVM/svm.h"
+}
+#include <opencv2/imgcodecs.hpp>
+
 
 using namespace std;
 
@@ -16,7 +23,23 @@ private:
 
     vector<cv::Mat> images_icon;
 
+
+    int *model_label;
+
+    vector<double > label_model;
+
+
+
+    struct libsvm::svm_model *model;
+
+    libsvm::svm_model *loadModelFromFile(bool *pBoolean);
+
 public:
+
+    libsvm::svm_parameter param;
+
+    bool usedModel = false;
+
 
     bool LoadImagesIcon();
 
@@ -24,7 +47,21 @@ public:
 
     bool CheckRoi(int i, int i1);
 
+
+    bool loadModel();
+
+
+    double detekuj_prob(vector<float> value);
+
+    vector<float> extractHog(cv::Rect_<int> &faces, cv::Mat mat);
+
+    void freeMem();
+
+
     Classification(string model_file);
+    ~Classification();
+
+    void predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> sign);
 };
 
 

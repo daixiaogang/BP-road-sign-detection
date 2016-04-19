@@ -52,13 +52,14 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
     for (Rect obj : sign)
         rectangle(frame, obj, Scalar(0, 255, 0), 2, 6, 0);
 
+    /*
     for (size_t i = 0; i < sign.size(); i++) {
         putText(frame, std::to_string(level_weights[i]),
                 Point(sign[i].x, sign[i].y), 1, 1, Scalar(0, 0, 255));
 
         cerr<<"level_weight:"<<level_weights[i]<<endl;
     }
-
+*/
     //
 
     /*
@@ -68,7 +69,7 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
     }
     */
 
-    putText(frame, std::to_string(fps), Point(frame.cols-200, 50), 2, 1, Scalar(0, 255, 255));
+    //putText(frame, std::to_string(fps), Point(frame.cols-200, 50), 2, 1, Scalar(0, 255, 255));
 
 
     //imshow( "window_name", frame );
@@ -81,3 +82,47 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
 
     return sign;
     }
+
+vector<Rect> ABoostDetection::DetectionCross(Mat frame) {
+    std::vector<Rect> sign;
+    std::vector<Rect> object;
+    Mat frame_gray;
+
+    cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
+    equalizeHist(frame_gray, frame_gray);
+
+    vector<int> reject_levels;
+    vector<double> level_weights;
+    vector<double> level_weights_object;
+
+
+
+    //this->detector_cascade.detectMultiScale(frame_gray, sign, 2, 2, 0 | CASCADE_SCALE_IMAGE);
+
+
+    //this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, 1.3,3, 0);
+
+    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 1.2, 2, CASCADE_SCALE_IMAGE,
+                                            Size(), Size(), true);
+
+
+
+    /*
+
+    if (level_weights.empty())
+        cerr<<"0"<<endl;
+    else
+        cerr<<level_weights[0]<<endl;
+
+*/
+    for (Rect obj : sign)
+        rectangle(frame, obj, Scalar(0, 255, 0), 2, 6, 0);
+
+
+    frame_gray.release();
+
+    level_weights.clear();
+    reject_levels.clear();
+
+    return sign;
+}

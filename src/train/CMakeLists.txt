@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.3)
-project(predic)
+project(train)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fopenmp ")
 find_package(Boost 1.58.0 COMPONENTS date_time program_options filesystem system REQUIRED)
@@ -23,13 +23,13 @@ if (NOT OpenCV_FOUND)
     message(FATAL_ERROR "Could not find boost!")
 endif ()
 
-set(SOURCE_FILES main.cpp ProgramOption.cpp ProgramOption.h FileOperation.cpp FileOperation.h ABoostDetection.cpp
-        ABoostDetection.h Classification.cpp Classification.h  Library/SVM/svm.cpp Library/SVM/svm.def Library/SVM/svm.h extractor.cpp extractor.h
-        lutTable.h)
+set(SOURCE_FILES main.cpp ProgramOption.cpp ProgramOption.h TrainSVM.cpp TrainSVM.h Library/SVM/svm.def Library/SVM/svm.h Library/SVM/svm.cpp Extractor.cpp Extractor.h TrainWaldBoost.cpp TrainWaldBoost.h
+        Library/xobject/precomp.hpp Library/xobject/waldboost.cpp Library/xobject/waldboost.hpp Library/xobject/feature_evaluator.hpp/ Library/xobject/feature_evaluator.cpp Library/xobject/lbpfeatures.cpp
+        Library/xobject/lbpfeatures.h Library/xobject/cascadeclassifier.h)
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
-    add_executable(predic ${SOURCE_FILES})
-    target_link_libraries(predic ${Boost_LIBRARIES} ${OpenCV_LIBS})
+    add_executable(train ${SOURCE_FILES})
+    target_link_libraries(train ${Boost_LIBRARIES} ${OpenCV_LIBS})
 endif ()
 
 

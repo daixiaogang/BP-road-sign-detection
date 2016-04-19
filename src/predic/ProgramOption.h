@@ -29,9 +29,6 @@ private:
 
     std::vector<string> list;
 
-
-
-
     int camera;
     bool show, no_class, clasify, debug, cross, output_mode;
     bool image_mode, video_mode, cam_mode;

@@ -2,44 +2,11 @@
 #include "ProgramOption.h"
 #include "ABoostDetection.h"
 #include "Classification.h"
-#include "libSVM.h"
-#include "extractor.h"
-#include <algorithm>
+
 using namespace std;
 using namespace cv;
 
-
-class Classify {
-
-private:
-
-    struct svm_model *ModelClasificator;
-
-public:
-
-    void load_modelLibClass(const string model);
-
-
-    double detekuj(vector<float> value);
-
-    double detekuj_prob(vector<float> value);
-
-
-    vector<float> extractHog(Rect_<int> &vector, Mat mat);
-};
-
-
-void Classify::load_modelLibClass(const string model) {
-    cout << "Loading model for LibSVM...." << endl;
-
-
-    if ((this->ModelClasificator = libSVM::getInstance()->loadModelFromFile(model)) == 0) {
-        cerr << "Can't load SVM model " << model << endl;
-    }
-}
-
-
-bool InitModels(ABoostDetection *p_adet) {
+bool InitModels(ABoostDetection *p_adet, Classification *pClassification, ProgramOption *pOption) {
 
     if (!p_adet->LoadModel()) {
         cerr << "ERROR: " << "Loading  detector model of adaboost:" << endl;
@@ -47,14 +14,14 @@ bool InitModels(ABoostDetection *p_adet) {
     }
     cout << "Model Adaboost is loaded" << endl;
 
-
-    /*
-    if (!pClassification->LoadModel()){
-        cerr << "ERROR: " << "Loading  classificator model of svm" << endl;
-        return false;
+    if (!pOption->GetModelClassif()){
+        if (!pClassification->loadModel()) {
+            cerr << "ERROR: " << "Loading  classificator model of svm" << endl;
+            return false;
+        }
+        cout << "Model SVM is loaded" << endl;
     }
-    cout << "Model SVM is loaded" << endl;
-*/
+
     return true;
 }
 
@@ -86,24 +53,18 @@ int main(int argc, char **argv) {
     // vytvoreni konruktoru ori aboost detektor
     ABoostDetection *adet = new ABoostDetection(opt->GetPathModelAboost());
 
-    //Classification *classify = new Classification(opt->GetPathModelSVM());
+    Classification *classif = new Classification(opt->GetPathModelSVM());
 
     //nacteni model
-    if (!InitModels(adet)) {
+    if (!InitModels(adet, classif, opt)) {
         delete opt;
         delete adet;
         return EXIT_FAILURE;
     }
 
 
-    Classify *classif = new Classify();
-    classif->load_modelLibClass(opt->GetPathModelSVM());
 
-    Classification *clasifon = new Classification("model");
-
-    clasifon->LoadImagesIcon();
-
-    vector<Mat> classif_icon = clasifon->GetImgIcon();
+    vector<Mat> classif_icon = classif->GetImgIcon();
 
     time_t start, end;
 
@@ -136,7 +97,6 @@ int main(int argc, char **argv) {
 
         // start the clock
         time(&start);
-        cont += 1;
 
         while (capture.read(frame)) {
             if (frame.empty()) {
@@ -148,42 +108,12 @@ int main(int argc, char **argv) {
             original = frame.clone();
 
             std::vector<Rect> sign;
-            std::vector<float> descriptors;
 
             sign = adet->Detection(frame, fps);
 
 
             if (!sign.empty() && !opt->GetModelClassif()) {
-
-                for (int i = 0; i < sign.size(); ++i) {
-
-                    descriptors = classif->extractHog(sign.at(i), original);
-
-                    //cout<<classif->detekuj(descriptors);
-
-                    Mat cropedImage = original(Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
-
-                    string pat = "/tmp/aa/" + to_string(cont) + "-" + to_string(counter) + ".jpg";
-                    imwrite(pat, cropedImage);
-
-
-                    double index = classif->detekuj_prob(descriptors);
-                    cout << index;
-
-                    Mat small_image = imread(LUT_image_filename[abs((int) index) - 1]);
-                    resize(small_image, small_image, Size(32, 32), INTER_CUBIC);
-
-
-                    try {
-
-                        small_image.copyTo(
-                                frame(cv::Rect(sign.at(i).x, sign.at(i).y, small_image.cols, small_image.rows)));
-                    }
-                    catch (int e) {
-                        cerr << "Ohraniceni" << endl;
-                    }
-
-                }
+                classif->predic(frame, original, sign);
             }
 
             if (opt->GetModeShow()) {
@@ -224,7 +154,7 @@ int main(int argc, char **argv) {
 
             cont += 1;
             string pat = "/tmp/" + to_string(i) + ".avi";
-            //VideoWriter video(pat, CV_FOURCC('D', 'I', 'V', 'X'), capture.get(CV_CAP_PROP_FPS), Size(640, 480), true);
+            VideoWriter video(pat, CV_FOURCC('D', 'I', 'V', 'X'), 20, Size(640, 480), true);
 
             // start the clock
             counter = 0;
@@ -248,10 +178,14 @@ int main(int argc, char **argv) {
 
                 sign = adet->Detection(frame, fps);
 
+                string patr = "/tmp/cc/" + to_string(counter) + ".jpg";
+                imwrite(patr, frame);
+
                 if (!sign.empty() && !opt->GetModelClassif()) {
                     for (int j = 0; j < sign.size(); ++j) {
 
-                        Mat cropedImage = original(Rect(sign.at(j).x, sign.at(j).y, sign.at(j).width, sign.at(j).height));
+                        Mat cropedImage = original(
+                                Rect(sign.at(j).x, sign.at(j).y, sign.at(j).width, sign.at(j).height));
                         imwrite("/tmp/aa/" + to_string(counter) + ".jpg", cropedImage);
 
                         td = (double) getTickCount();
@@ -267,7 +201,7 @@ int main(int argc, char **argv) {
                         cout << index << endl;
 
                         te = (double) getTickCount();
-                        if (clasifon->CheckRoi(sign.at(j).x, sign.at(j).height)) {
+                        if (classif->CheckRoi(sign.at(j).x, sign.at(j).height)) {
                             small_image = classif_icon.at(abs((int) index) - 1);
                             resize(small_image, small_image, Size(sign.at(j).height, sign.at(j).width), INTER_CUBIC);
                             small_image.copyTo(
@@ -279,8 +213,11 @@ int main(int argc, char **argv) {
 
 
                     }
+
+                    string patr = "/tmp/dd/" + to_string(counter) + ".jpg";
+                    imwrite(patr, frame);
                 }
-                else{
+                else {
                     td = tc = te = 0;
                 }
 
@@ -292,7 +229,7 @@ int main(int argc, char **argv) {
 
                 }
 
-                //video.write(frame);
+                video.write(frame);
 
 
                 //sign.clear();
@@ -302,7 +239,7 @@ int main(int argc, char **argv) {
 
                 t = ((double) getTickCount() - t) / getTickFrequency();
 
-                cout << "QQ:" << t << ":" << 1 / t << ":" << td << ":" << tc <<":" <<te<< endl;
+                cout << "QQ:" << t << ":" << 1 / t << ":" << td << ":" << tc << ":" << te << endl;
 
                 fps = 1 / t;
                 counter++;
@@ -310,7 +247,7 @@ int main(int argc, char **argv) {
 
 
             capture.release();
-            //video.release();
+            video.release();
 
 
         }
@@ -321,6 +258,9 @@ int main(int argc, char **argv) {
             cout << list_input.at(i) << endl;
 
             frame = imread(list_input.at(i));
+            original = frame.clone();
+
+            //resize(frame, frame, Size(FRAME_WIDTH, FRAME_HEIGHT), INTER_CUBIC);
 
             // start the clock
             time(&start);
@@ -328,37 +268,30 @@ int main(int argc, char **argv) {
             std::vector<Rect> sign;
             std::vector<float> descriptors;
 
-            sign = adet->Detection(frame, fps);
+            sign = adet->DetectionCross(frame);
 
             if (!sign.empty() && !opt->GetModelClassif()) {
+                for (int j = 0; j < sign.size(); ++j) {
 
-                for (int i = 0; i < sign.size(); ++i) {
+                    Mat cropedImage = original(Rect(sign.at(j).x, sign.at(j).y, sign.at(j).width, sign.at(j).height));
+                    imwrite("/tmp/aa/" + to_string(i) + ".jpg", cropedImage);
 
-                    descriptors = classif->extractHog(sign.at(i), original);
 
-                    //cout<<classif->detekuj(descriptors);
-
-                    Mat cropedImage = original(
-                            Rect(sign.at(i).x, sign.at(i).y, sign.at(i).width, sign.at(i).height));
-
-                    string pat = "/tmp/aa/" + to_string(cont) + "-" + to_string(counter) + ".jpg";
-                    imwrite(pat, cropedImage);
+                    descriptors = classif->extractHog(sign.at(j), original);
 
 
                     double index = classif->detekuj_prob(descriptors);
-                    cout << index;
 
-                    Mat small_image = imread(LUT_image_filename[abs((int) index) - 1]);
-                    resize(small_image, small_image, Size(32, 32), INTER_CUBIC);
+                    cout << index << endl;
 
 
-                    try {
-
+                    if (classif->CheckRoi(sign.at(j).x, sign.at(j).height)) {
+                        small_image = classif_icon.at( index) ;
+                        resize(small_image, small_image, Size(sign.at(j).height, sign.at(j).width), INTER_CUBIC);
                         small_image.copyTo(
-                                frame(cv::Rect(sign.at(i).x, sign.at(i).y, small_image.cols, small_image.rows)));
-                    }
-                    catch (int e) {
-                        cerr << "Ohraniceni" << endl;
+                                frame(cv::Rect(sign.at(j).x , sign.at(j).y, small_image.cols,
+                                               small_image.rows)));
+                        small_image.release();
                     }
 
                 }
@@ -371,6 +304,9 @@ int main(int argc, char **argv) {
                 imshow(WindowName, frame);
                 waitKey(1);
             }
+
+            string pat = "/tmp/bb/" + to_string(i) + ".jpg";
+            imwrite(pat, frame);
 
 
             // see how much time has elapsed
@@ -396,63 +332,3 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-
-vector<float> Classify::extractHog(Rect_<int> &faces, Mat mat) {
-    Mat cropedImage = mat(Rect(faces.x, faces.y, faces.width, faces.height));
-
-    std::vector<float> descriptors;
-    descriptors = getHog(cropedImage);
-    cropedImage.release();
-
-    return descriptors;
-}
-
-double Classify::detekuj(vector<float> value) {
-
-    struct svm_node *svmVecT;
-    svmVecT = (struct svm_node *) malloc((value.size() + 1) * sizeof(struct svm_node));
-    int i;
-    for (i = 0; i < value.size(); i++) {
-        svmVecT[i].index = i + 1;
-        svmVecT[i].value = value.at(i);
-    }
-
-    svmVecT[i].index = -1;   // End of line
-
-    double result = svm_predict(this->ModelClasificator, svmVecT);
-    return result;
-}
-
-double Classify::detekuj_prob(vector<float> value) {
-
-
-    struct svm_node *svmVecT;
-    svmVecT = (struct svm_node *) malloc((value.size() + 1) * sizeof(struct svm_node));
-
-
-    int i;
-    for (i = 0; i < value.size(); i++) {
-        svmVecT[i].index = i + 1;
-        svmVecT[i].value = value.at(i);
-    }
-
-    svmVecT[i].index = -1;   // End of line
-
-    double prob[45];
-
-    double td = (double) getTickCount();
-    double result = svm_predict_probability(this->ModelClasificator, svmVecT, prob);
-    td = ((double) getTickCount() - td) / getTickFrequency();
-    cout<<value.size() + 1<<":"<<td<<endl;
-
-    //sort(prob, prob+45);
-
-    cerr<<result<<":"<<prob[int (abs(result) +1)]<<endl;
-    /*
-    for (size_t i = 0; i != 45; ++i)
-        cerr << prob[i] << " ";
-    cerr<<endl;
-*/
-    free( svmVecT);
-    return result;
-}

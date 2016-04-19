@@ -28,6 +28,7 @@ public:
     bool LoadModel();
 
     vector<Rect> Detection(Mat frame, double fps);
+    vector<Rect> DetectionCross(Mat frame);
 
 
 };
