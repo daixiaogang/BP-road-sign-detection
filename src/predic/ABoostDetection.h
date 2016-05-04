@@ -22,7 +22,7 @@ private:
 
     CascadeClassifier detector_cascade;
 
-    double threshold = 1.0;
+    double threshold = 0.0;
 
 
 public:
@@ -34,7 +34,7 @@ public:
 
     vector<Rect> Detection(Mat frame, double fps);
 
-    vector<Rect> DetectionCross(Mat frame, string basicString, string string1);
+    vector<Rect> DetectionCross(Mat frame, string roc_file, string msr_file, string file);
 
 
     void Draw_object(Mat mat, vector<Rect> vector);

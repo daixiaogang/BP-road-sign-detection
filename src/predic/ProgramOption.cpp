@@ -34,9 +34,10 @@ ProgramOption::ProgramOption(int argc, char **argv) {
 
 void ProgramOption::InitDefaultValues() {
 
+    //m_aboost = "/home/maiikeru/Documents/code/directory/A99Gi24/cascade.xml";
     //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/D/cascade.xml";
     //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/1/cascade.xml";
-    m_aboost = "/home/maiikeru/Documents/Detector/models/8/cascade.xml";
+    m_aboost = "/home/maiikeru/Documents/Detector/models/9/cascade.xml";
     //m_aboost = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_Aboost_detector/Eye/haarcascade_eye.xml";
     //m_svm = "../../../models/models_/model_SVM_classifier/model_prob";
     //m_svm = "/home/maiikeru/bitbucket/BP-road-sign-detection/models/model_SVM_classifier/model_prob";
@@ -77,7 +78,7 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
                     ("show,s", "Show current image or frame by video")
                     ("annotation,a", po::value<std::string>(&annotation), "File of output annotation")
                     ("classification,c", "Make only classification")
-                    ("no_classification,n", "Make only detection")
+                    ("detection,d", "Make only detection")
                     ("model_detect,t", po::value<std::string>(&m_aboost), "File of model  detection")
                     ("model_classif,f", po::value<std::string>(&m_svm), "File of model  clasificatin")
                     ("help,h", "Print help messages")
@@ -101,7 +102,7 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
                 cout << "show" << endl;
             }
 
-            if (vm.count("classification") && vm.count("no_classification")) {
+            if (vm.count("classification") && vm.count("detection")) {
                 cerr << "ERROR: " << "Can be only one parameter --classification|--no_classification" << endl;
                 return ERROR_IN_COMMAND_LINE;
             }
@@ -111,7 +112,7 @@ int ProgramOption::ParseArgument(int argc, char **argv, FileOperation *p_fopt) {
                 clasify = true;
             }
 
-            if (vm.count("no_classification")) {
+            if (vm.count("detection")) {
                 no_class = true;
                 cout << "no clasiif" << endl;
             }
@@ -268,9 +269,6 @@ bool ProgramOption::GetModelClassif() {
     return this->no_class;
 }
 
-bool ProgramOption::GetModeCross() {
-    return this->cross;
-}
 
 bool ProgramOption::GetModeDebug() {
     return this->debug;
@@ -291,4 +289,12 @@ bool ProgramOption::CreateDir(std::string dir_name) {
     }
 
     return true;
+}
+
+bool ProgramOption::GetOnlyClassif() {
+    return this->clasify;
+}
+
+bool ProgramOption::GetOnlyDetection() {
+    return this->no_class;
 }

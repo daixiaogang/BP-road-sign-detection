@@ -46,6 +46,8 @@ string JoinFile(string out_dit, string file);
 
 void CreateFile(string filename);
 
+string GetFileName(string file);
+
 int main(int argc, char **argv) {
 
     // vytvoreni konstruktoru a prace se vstupem
@@ -98,6 +100,9 @@ int main(int argc, char **argv) {
     std::string dbg_c_msr_file = "C_MSR.txt";
 
 
+    std::string anot_file = "anotation.txt";
+
+
     VideoCapture capture;
     Mat frame;
     Mat original;
@@ -105,8 +110,18 @@ int main(int argc, char **argv) {
     int cont = 84;
     string WindowName;
 
+    string x1,x2,y1,y2;
+
+    std::vector<string> output_anotation;
     if (opt->GetMode() == 1) {
         WindowName = "Camera";
+        std::vector<double > predic_classes;
+
+        string file_name;
+
+        bool make_anotatin = false;
+
+        double t, td, tc, te;
         if (!InitVideoCapture(&capture, opt->GetCameraRun())) {
             cerr << "RROOR load camera: " << opt->GetCameraRun() << endl;
 
@@ -124,8 +139,13 @@ int main(int argc, char **argv) {
                 break;
             }
 
-            resize(frame, frame, Size(FRAME_WIDTH, FRAME_HEIGHT), INTER_CUBIC);
+            Mat prev = frame.clone();
+
+
+            t = (double) getTickCount();
+
             original = frame.clone();
+            resize(frame, frame, Size(FRAME_WIDTH, FRAME_HEIGHT), INTER_CUBIC);
 
             std::vector<Rect> sign;
 
@@ -133,8 +153,16 @@ int main(int argc, char **argv) {
 
 
             if (!sign.empty() && !opt->GetModelClassif()) {
-                classif->predic(frame, original, sign);
+                predic_classes =   classif->predic(frame, original, sign);
+
+                //adet->Draw_object(frame, sign);
+
+                //classif->DrawClassif(frame);
+
             }
+            else
+                adet->Draw_object(frame, sign);
+
 
             if (opt->GetModeShow()) {
 
@@ -145,6 +173,30 @@ int main(int argc, char **argv) {
                 //imshow("window_name", frame);
                 //waitKey(1);
             }
+
+
+            if (make_anotatin){
+                file_name = "Frame@";
+
+                for (unsigned long j = 0; j < sign.size(); ++j) {
+                    string anotace = file_name+to_string(counter).c_str()+";";
+                    x1 = to_string(sign.at(j).x);
+                    y1 = to_string(sign.at(j).y);
+                    x2 = to_string(sign.at(j).x + sign.at(j).width);
+                    y2 = to_string(sign.at(j).y + sign.at(j).height);
+
+                    anotace+=x1+";"+y1+";"+x2+";"+y2;
+
+
+                    if (!opt->GetModelClassif())
+                        anotace+=";"+to_string((int)predic_classes.at(j));
+
+                    anotace+="\n";
+                    output_anotation.push_back(anotace);
+                }
+            }
+
+
 
 
             // see how much time has elapsed
@@ -158,10 +210,44 @@ int main(int argc, char **argv) {
             // overflow protection
             if (counter == (INT_MAX - 1000))
                 counter = 0;
+
+
+            t = ((double) getTickCount() - t) / getTickFrequency();
+
+            cout << "QQ:" << t << ":" << 1 / t << ":" << td << ":" << tc << ":" << te << endl;
+
+            fps = 1 / t;
+
+            cout<<"FPS:"<<fps<<endl;
+
+            //if (counter == 10this->object0)
+            //    break;
         }
+
+        if (make_anotatin) {
+            // Create outputs for detector
+            string anotating_file = JoinFile(opt->GetOutputPath(), anot_file);
+            ofstream anot;
+            anot.open(anotating_file, ios::out);
+
+            if (anot.good()) {
+                for (int k = 0; k < output_anotation.size(); ++k)
+                    anot << output_anotation.at(k);
+                anot.close();
+            }
+        }
+
+
+        output_anotation.clear();
+        frame.release();
+        capture.release();
+
+
+
+
     } else if (opt->GetMode() == 2) {
         WindowName = "Video";
-
+        std::vector<double > predic_classes;
         for (int i = 0; i < list_input.size(); i++) {
             cout << list_input.at(i) << ":" << list_input.size() << endl;
             if (!InitVideoCapture(&capture, list_input.at(i))) {
@@ -182,6 +268,8 @@ int main(int argc, char **argv) {
             double t, td, tc, te;
 
             while (capture.read(frame)) {
+                Mat prev = frame.clone();
+
                 t = (double) getTickCount();
 
                 if (frame.empty()) {
@@ -200,46 +288,12 @@ int main(int argc, char **argv) {
 
                 string patr = "/tmp/cc/" + to_string(counter) + ".jpg";
                 imwrite(patr, frame);
+                adet->Draw_object(frame, sign);
 
                 if (!sign.empty() && !opt->GetModelClassif()) {
-                    for (int j = 0; j < sign.size(); ++j) {
-
-                        Mat cropedImage = original(
-                                Rect(sign.at(j).x, sign.at(j).y, sign.at(j).width, sign.at(j).height));
-                        imwrite("/tmp/aa/" + to_string(counter) + ".jpg", cropedImage);
-
-                        td = (double) getTickCount();
-
-                        descriptors = classif->extractHog(sign.at(j), original);
-                        td = ((double) getTickCount() - td) / getTickFrequency();
-
-                        tc = (double) getTickCount();
-
-                        double index = classif->detekuj_prob(descriptors);
-                        tc = ((double) getTickCount() - tc) / getTickFrequency();
-
-                        cout << index << endl;
-
-                        te = (double) getTickCount();
-                        if (classif->CheckRoi(sign.at(j).x, sign.at(j).height)) {
-                            small_image = classif_icon.at(abs((int) index) - 1);
-                            resize(small_image, small_image, Size(sign.at(j).height, sign.at(j).width), INTER_CUBIC);
-                            small_image.copyTo(
-                                    frame(cv::Rect(sign.at(j).x - sign.at(j).height, sign.at(j).y, small_image.cols,
-                                                   small_image.rows)));
-                            small_image.release();
-                        }
-                        te = ((double) getTickCount() - te) / getTickFrequency();
-
-
-                    }
-
-                    string patr = "/tmp/dd/" + to_string(counter) + ".jpg";
-                    imwrite(patr, frame);
+                    predic_classes =   classif->predic(frame, original, sign);
                 }
-                else {
-                    td = tc = te = 0;
-                }
+
 
                 if (opt->GetModeShow()) {
 
@@ -249,7 +303,7 @@ int main(int argc, char **argv) {
 
                 }
 
-                video.write(frame);
+                //video.write(frame);
 
 
                 //sign.clear();
@@ -263,6 +317,12 @@ int main(int argc, char **argv) {
 
                 fps = 1 / t;
                 counter++;
+
+
+
+
+                pat = "/tmp/tt/" +to_string(i)+ "_"+ to_string(counter) + ".jpg";
+                imwrite(pat, prev);
             }
 
 
@@ -275,7 +335,20 @@ int main(int argc, char **argv) {
     else if (opt->GetMode() == 3) {
         WindowName = "Image";
 
-        for (int i = 0; i < list_input.size(); ++i) {
+        // Create outputs for detector
+        string anotating_file = JoinFile(opt->GetOutputPath(), anot_file);
+
+        ofstream anot;
+        anot.open(anotating_file, ios::out);
+
+        string file_name;
+        string x1,x2,y1,y2;
+
+        bool make_anotatin = true;
+
+        std::vector<double > predic_classes;
+
+        for (int i = 0; i < list_input.size()-1; ++i) {
 
             frame = imread(list_input.at(i));
             original = frame.clone();
@@ -284,8 +357,10 @@ int main(int argc, char **argv) {
             std::vector<Rect> sign;
             sign = adet->Detection(frame, fps);
 
+            adet->Draw_object(frame, sign);
+
             if (!sign.empty() && !opt->GetModelClassif()) {
-                classif->predic(frame, original, sign);
+              predic_classes =   classif->predic(frame, original, sign);
             }
 
 
@@ -296,15 +371,61 @@ int main(int argc, char **argv) {
                 waitKey(1);
             }
 
+
+            if (make_anotatin){
+                file_name = GetFileName(list_input.at(i));
+
+                for (unsigned long j = 0; j < sign.size(); ++j) {
+                    string anotace = file_name+";";
+                    x1 = to_string(sign.at(j).x);
+                    y1 = to_string(sign.at(j).y);
+                    x2 = to_string(sign.at(j).x + sign.at(j).width);
+                    y2 = to_string(sign.at(j).y + sign.at(j).height);
+
+                    anotace+=x1+";"+y1+";"+x2+";"+y2;
+
+
+                    if (!opt->GetModelClassif())
+                        anotace+=";"+to_string((int)predic_classes.at(j));
+
+                    anotace+="\n";
+                    output_anotation.push_back(anotace);
+                }
+            }
+
             string pat = "/tmp/bb/" + to_string(i) + ".jpg";
             imwrite(pat, frame);
-
-
         }
+
+        if (make_anotatin) {
+            // Create outputs for detector
+            string anotating_file = JoinFile(opt->GetOutputPath(), anot_file);
+            ofstream anot;
+            anot.open(anotating_file, ios::out);
+
+            if (anot.good()) {
+                for (int k = 0; k < output_anotation.size(); ++k)
+                    anot << output_anotation.at(k);
+                anot.close();
+            }
+        }
+
+
     }
     else if (opt->GetMode() == 4) {
-        WindowName = "Cross-validation";
 
+        bool make_anotatin = true;
+        // Create outputs for detector
+        string anotating_file = JoinFile(opt->GetOutputPath(), anot_file);
+
+        ofstream anot;
+        anot.open(anotating_file, ios::out);
+
+        string file_name;
+        string x1,x2,y1,y2;
+
+        WindowName = "Cross-validation";
+        std::vector<double > predic_classes;
         // Create output directory for frame
         string full_path_frame = JoinFile(opt->GetOutputPath(), dbg_frame_dir);
 
@@ -325,25 +446,34 @@ int main(int argc, char **argv) {
         CreateFile(c_roc_file);
         CreateFile(c_msr_file);
 
-
         if (!opt->GetModelClassif())
             classif->WriteLabel(c_roc_file);
 
-        for (int i = 0; i < list_input.size(); ++i) {
+        for (int i = 0; i < list_input.size() - 1; i++) {
             // Load image
-            frame = imread(list_input.at(i));
+
+            try {
+                frame = imread(list_input.at(i));
+            }
+            catch (runtime_error &ex) {
+                fprintf(stderr, "Load image imread croosvalidation, frame empty: %s\n", ex.what());
+                break;
+            }
+
 
             // Clone image
             original = frame.clone();
 
             // Detection
             std::vector<Rect> sign;
-            sign = adet->DetectionCross(frame, d_roc_file, d_msr_file);
+
+            sign = adet->DetectionCross(frame, d_roc_file, d_msr_file, list_input.at(i));
 
             // Classification
-            if (!sign.empty() && !opt->GetModelClassif()) {
-                classif->predicCross(original, sign, c_roc_file, c_msr_file);
+            if (!opt->GetModelClassif()) {
+               predic_classes =  classif->predicCross(original, sign, c_roc_file, c_msr_file, false);
             }
+
 
             // Show output
             if (opt->GetModeShow()) {
@@ -361,6 +491,48 @@ int main(int argc, char **argv) {
                 pat = full_path_frame + image.filename().string().c_str();
                 imwrite(pat, frame);
             }
+
+            if (make_anotatin){
+                //file_name = GetFileName(list_input.at(i));
+                file_name = list_input.at(i);
+
+                for (unsigned long j = 0; j < sign.size(); ++j) {
+                    string anotace = file_name+";";
+                    x1 = to_string(sign.at(j).x);
+                    y1 = to_string(sign.at(j).y);
+                    x2 = to_string(sign.at(j).x + sign.at(j).width);
+                    y2 = to_string(sign.at(j).y + sign.at(j).height);
+
+                    anotace+=x1+";"+y1+";"+x2+";"+y2;
+
+
+                    if (!opt->GetModelClassif())
+                        anotace+=";"+to_string((int)predic_classes.at(j));
+
+                    anotace+="\n";
+                    output_anotation.push_back(anotace);
+                }
+            }
+
+
+
+            string pat = "/tmp/bb/" + to_string(i) + ".jpg";
+            imwrite(pat, frame);
+
+            frame.release();
+        }
+
+        if (make_anotatin) {
+            // Create outputs for detector
+            string anotating_file = JoinFile(opt->GetOutputPath(), anot_file);
+            ofstream anot;
+            anot.open(anotating_file, ios::out);
+
+            if (anot.good()) {
+                for (int k = 0; k < output_anotation.size(); ++k)
+                    anot << output_anotation.at(k);
+                anot.close();
+            }
         }
 
     }
@@ -373,6 +545,11 @@ int main(int argc, char **argv) {
     delete adet;
 
     return 0;
+}
+
+string GetFileName(string file) {
+    boost::filesystem::path p = file;
+    return  p.filename().string();
 }
 
 void CreateFile(string filename) {

@@ -26,6 +26,7 @@ private:
 
     double *predic_prob;
 
+    int predic_index;
 
     int classesN;
 
@@ -40,6 +41,10 @@ private:
     libsvm::svm_model *loadModelFromFile(bool *pBoolean);
 
 public:
+
+
+    std::vector<cv::Rect>  object;
+    std::vector<double > predic_classes;
 
     libsvm::svm_parameter param;
 
@@ -59,6 +64,7 @@ public:
     double detekuj_prob(vector<float> value);
 
     vector<float> extractHog(cv::Rect_<int> &faces, cv::Mat mat);
+    vector<float> extractHog( cv::Mat mat);
 
     void freeMem();
 
@@ -66,10 +72,12 @@ public:
     Classification(string model_file);
     ~Classification();
 
-    void predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> sign);
-    void predicCross(cv::Mat original, vector<cv::Rect> sign, string basicString, string string1);
+    vector<double> predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> sign);
+    vector<double>predicCross(cv::Mat original, vector<cv::Rect> sign, string basicString, string string1, bool b);
 
     void WriteLabel(string filename);
+
+    void DrawClassif( cv::Mat mat);
 };
 
 

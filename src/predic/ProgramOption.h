@@ -80,7 +80,9 @@ public:
 
     bool GetModelClassif();
 
-    bool GetModeCross();
+    bool GetOnlyClassif();
+
+    bool GetOnlyDetection();
 
     bool GetModeDebug();
 

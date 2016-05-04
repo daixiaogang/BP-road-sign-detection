@@ -18,7 +18,6 @@ bool Classification::LoadImagesIcon() {
 
     vector<string> list;
 
-
     boost::filesystem::path path = "/home/maiikeru/bitbucket/BP-road-sign-detection/data_sets/icons/";
     boost::filesystem::recursive_directory_iterator itr(path);
     while (itr != boost::filesystem::recursive_directory_iterator()) {
@@ -48,7 +47,7 @@ bool Classification::CheckRoi(int i, int i1) {
 Classification::~Classification() {
     freeMem();
 
-    delete  this->predic_prob;
+    delete this->predic_prob;
 }
 
 void Classification::freeMem() {
@@ -123,23 +122,21 @@ double Classification::detekuj_prob(vector<float> value) {
     td = ((double) cv::getTickCount() - td) / cv::getTickFrequency();
     cout << td << endl;
 
-    //sort(prob, prob+45);
+    ////sort(prob, prob+45);
     int j = 0;
 
     for (; j < this->label_model.size(); ++j) {
 
         if ((fabs(result)) == this->label_model.at(j)) {
-            cout << "Q:" << j << endl;
+            //cout << "Q:" << j << endl;
+            this->predic_index = j;
             break;
         }
     }
 
 
-    cerr << result << "W:" << j << ":" << this->predic_prob[j] << endl;
+    //cerr << result << "W:" << j << ":" << this->predic_prob[j] << endl;
 
-    for (size_t i = 0; i != this->classesN; ++i)
-        cerr << this->predic_prob[i] << " ";
-    cerr << endl;
 
     free(svmVecT);
     return (fabs(result));
@@ -156,6 +153,12 @@ vector<float> Classification::extractHog(cv::Rect_<int> &faces, cv::Mat mat) {
     return descriptors;
 }
 
+vector<float> Classification::extractHog(cv::Mat mat) {
+
+    return getHog(mat);
+}
+
+
 bool Classification::loadModel() {
 
     bool error = true;
@@ -168,51 +171,116 @@ bool Classification::loadModel() {
     return error;
 }
 
-void Classification::predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> sign) {
+vector<double> Classification::predic(cv::Mat frame, cv::Mat original, vector<cv::Rect> sign) {
+
+
+    double dw, dh;
+
+    //std::vector<cv::Rect>  object;
+
+
+    dw = (double) original.rows / (double) frame.rows;
+    dh = (double) original.cols / (double) frame.cols;
+
+    std::vector<cv::Rect> obj;
     for (int j = 0; j < sign.size(); ++j) {
 
-        std::vector<float> descriptors = this->extractHog(sign.at(j), original);
+        obj = sign;
+
+        obj.at(j).x *= dh;
+        obj.at(j).y *= dw;
+        obj.at(j).width *= dh;
+        obj.at(j).height *= dw;
+
+
+        std::vector<float> descriptors = this->extractHog(obj.at(j), original);
         double index = this->detekuj_prob(descriptors);
+
+        if (this->predic_prob[this->predic_index] >= 0.2) {
+            this->object.push_back(sign.at(j));
+            predic_classes.push_back(index);
+
+
+            rectangle(frame, sign.at(j), cv::Scalar(0, 255, 0), 2, 6, 0);
+
+            if (this->CheckRoi(sign.at(j).x, sign.at(j).height)) {
+                cv::Mat small_image = this->images_icon.at(abs((int) index) - 1);
+                resize(small_image, small_image, cv::Size(sign.at(j).height, sign.at(j).width), cv::INTER_CUBIC);
+                small_image.copyTo(
+                        frame(cv::Rect(sign.at(j).x - sign.at(j).height, sign.at(j).y, small_image.cols,
+                                       small_image.rows)));
+                small_image.release();
+            }
+
+
+        }
+
+
+        cout << "\nMAX prob:     " << this->predic_prob[this->predic_index] << endl;
+
 
         cout << index << endl;
 
-        if (this->CheckRoi(sign.at(j).x, sign.at(j).height)) {
-            cv::Mat small_image = this->images_icon.at(abs((int) index) - 1);
-            resize(small_image, small_image, cv::Size(sign.at(j).height, sign.at(j).width), cv::INTER_CUBIC);
-            small_image.copyTo(
-                    frame(cv::Rect(sign.at(j).x - sign.at(j).height, sign.at(j).y, small_image.cols,
-                                   small_image.rows)));
-            small_image.release();
-        }
+
     }
+
+
+    return predic_classes;
 }
 
 
-void Classification::predicCross(cv::Mat original, vector<cv::Rect> sign, string roc_file, string msr_file) {
-    for (int j = 0; j < sign.size(); ++j) {
+vector<double> Classification::predicCross(cv::Mat original, vector<cv::Rect> sign, string roc_file, string msr_file,
+                                           bool b) {
+    std::vector<double> predic_classes;
+    unsigned long item;
+
+    if (b)
+        item = 1;
+    else
+        item = sign.size();
+
+    // Write result to files
+    ofstream f_c_roc, f_c_msr;
+    f_c_roc.open(roc_file, ios::app);
+    f_c_msr.open(msr_file, ios::app);
+
+
+    if (item > 1)
+        item = 1;
+
+    for (int j = 0; j < item; ++j) {
 
         // Extract hog
-        std::vector<float> descriptors = this->extractHog(sign.at(j), original);
+        std::vector<float> descriptors;
+        if (b)
+            descriptors = this->extractHog(original);
+        else
+            descriptors = this->extractHog(sign.at(j), original);
 
         //Prediction
         double index = this->detekuj_prob(descriptors);
 
-        // Write result to files
-        ofstream f_c_roc, f_c_msr;
-        f_c_roc.open(roc_file, ios::app);
-        f_c_msr.open(msr_file, ios::app);
+        predic_classes.push_back(index);
 
         f_c_msr << index << endl;
+        f_c_roc << index << " ";
         for (int i = 0; i < this->classesN; ++i) {
-            f_c_roc<<this->predic_prob[i]<<" ";
+            f_c_roc << this->predic_prob[i] << " ";
         }
-        f_c_roc<<"\n";
-
-        // Close files
-        f_c_msr.close();
-        f_c_roc.close();
+        f_c_roc << "\n";
 
     }
+
+    if (sign.empty()) {
+        f_c_msr << "0" << endl;
+    }
+
+
+    // Close files
+    f_c_msr.close();
+    f_c_roc.close();
+
+    return predic_classes;
 }
 
 void Classification::WriteLabel(string filename) {
@@ -231,5 +299,28 @@ void Classification::WriteLabel(string filename) {
     }
 
     file.close();
+
+}
+
+void Classification::DrawClassif(cv::Mat mat) {
+
+
+    for (int j = 0; j < this->object.size(); j++) {
+        rectangle(mat, this->object.at(j), cv::Scalar(0, 255, 0), 2, 6, 0);
+
+        if (this->CheckRoi(this->object.at(j).x, this->object.at(j).height)) {
+            cv::Mat small_image = this->images_icon.at(abs((int) this->predic_classes.at(j)) - 1);
+            resize(small_image, small_image, cv::Size(this->object.at(j).height, this->object.at(j).width),
+                   cv::INTER_CUBIC);
+            small_image.copyTo(
+                    mat(cv::Rect(this->object.at(j).x - this->object.at(j).height, this->object.at(j).y,
+                                 small_image.cols,
+                                 small_image.rows)));
+            small_image.release();
+        }
+
+
+    }
+
 
 }

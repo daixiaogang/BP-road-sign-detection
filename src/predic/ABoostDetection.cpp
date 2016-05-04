@@ -35,7 +35,7 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
 
     //this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, 1.3,3, 0);
 
-    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 1.6, 2, CASCADE_SCALE_IMAGE,
+    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 1.3, 2, CASCADE_SCALE_IMAGE,
                                             Size(), Size(), true);
 
 
@@ -50,8 +50,7 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
     sign = object;
     level_weights = level_weights_object;
 
-    for (Rect obj : sign)
-        rectangle(frame, obj, Scalar(0, 255, 0), 2, 6, 0);
+
 
     /*
     for (size_t i = 0; i < sign.size(); i++) {
@@ -84,7 +83,7 @@ vector<Rect> ABoostDetection::Detection(Mat frame, double fps) {
     return sign;
 }
 
-vector<Rect> ABoostDetection::DetectionCross(Mat frame, string roc_file, string msr_file) {
+vector<Rect> ABoostDetection::DetectionCross(Mat frame, string roc_file, string msr_file, string file) {
 
     // Set frame to grayscale
     Mat frame_gray;
@@ -95,9 +94,13 @@ vector<Rect> ABoostDetection::DetectionCross(Mat frame, string roc_file, string 
     vector<int> reject_levels;
     vector<double> level_weights;
 
+    string x1,x2,y1,y2;
+
     // Detectin operation
-    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 1.2, 2, CASCADE_SCALE_IMAGE,
+    this->detector_cascade.detectMultiScale(frame_gray, sign, reject_levels, level_weights, 1.2, 1, CASCADE_SCALE_IMAGE,
                                             Size(), Size(), true);
+
+
 
     // Write result to files
     ofstream f_d_roc, f_d_msr;
@@ -106,13 +109,36 @@ vector<Rect> ABoostDetection::DetectionCross(Mat frame, string roc_file, string 
 
     if (f_d_roc.good() && f_d_msr.good()) {
         if (level_weights.empty()) {
-            f_d_roc << "0\n";
+            //f_d_roc << "-2\n";
             f_d_msr << "0\n";
         }
         else {
-            f_d_roc << level_weights[0] << "\n";
-            if (level_weights[0] >= this->threshold)
-                f_d_msr << "1\n";
+
+            for (unsigned long j = 0; j < sign.size(); ++j) {
+
+                string anotace = file+";";
+                x1 = to_string(sign.at(j).x);
+                y1 = to_string(sign.at(j).y);
+                x2 = to_string(sign.at(j).x + sign.at(j).width);
+                y2 = to_string(sign.at(j).y + sign.at(j).height);
+
+                anotace+=x1+";"+y1+";"+x2+";"+y2+";";
+                anotace+=to_string(level_weights[j]);
+                //anotace+="\n";
+
+                f_d_roc<<anotace<<endl;
+
+                if (level_weights[j] >= this->threshold)
+                    f_d_msr << "1\n";
+                else
+                    f_d_msr << "0\n";
+                }
+
+
+
+
+            //f_d_roc << level_weights[0] << "\n";
+
         }
     }
     // free memory
@@ -123,6 +149,9 @@ vector<Rect> ABoostDetection::DetectionCross(Mat frame, string roc_file, string 
     // Close files
     f_d_roc.close();
     f_d_msr.close();
+
+
+
 
     return sign;
 }
